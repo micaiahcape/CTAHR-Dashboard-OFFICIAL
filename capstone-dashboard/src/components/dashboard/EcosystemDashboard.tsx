@@ -277,16 +277,18 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
         fetch(
           dataset === "noncomm"
             ? "/fisheriesdata/20260216_tidied_noncomm_ev.geojson"
-            : "/fisheriesdata/20260126_comm_ev_byMoku.geojson"
+            : "/fisheriesdata/comm_EV_byCatchmentArea_09182026.geojson"
         ),
       ]);
 
       const [geo, dataGeo] = await Promise.all([geoRes.json(), dataRes.json()]);
 
-      const rows =
+      /* const rows =
         dataset === "noncomm"
           ? parseNoncommGeoJSON(dataGeo)
-          : parseCommGeoJSON(dataGeo);
+          : parseCommGeoJSON(dataGeo); */
+
+      const rows = parseCommGeoJSON(dataGeo);
 
       setGeoData(dataset === "comm" ? dataGeo : geo);
       setRowData(rows);

@@ -128,7 +128,7 @@ function GeoJSONLayer({
         const label = isExtents
           ? `${feature.properties.realm} — ${feature.properties.moku_olelo}`
           : mapType === "comm"
-          ? `Moku: ${feature.properties.area_id}`
+          ? `${feature.properties.area_id}`
           : `County: ${feature.properties.county}`;
 
         const valueLine = isExtents
