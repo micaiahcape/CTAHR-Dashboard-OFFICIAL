@@ -21,6 +21,7 @@ export default function FilterSidebar({ layer, setLayer, onLayerChange }: Filter
 
   return (
     <div className="left-nav">
+      
       <Image src="/logo.png" className="left-nav-logo" alt="Oleson Lab" width={144} height={48} unoptimized />
       <div className="left-nav-title">Hawaiʻi</div>
       <div className="left-nav-subtitle">Ecosystem Accounts</div>

@@ -32,12 +32,12 @@ export interface DashboardGeoJSON {
   features: DashboardGeoFeature[];
 }
 
-interface ColorThresholds {
+/*interface ColorThresholds {
   q1: number;
   q2: number;
   q3: number;
   q4: number;
-}
+}*/
 
 interface MapProps {
   mapType?: string;
@@ -49,7 +49,24 @@ interface MapProps {
   selectedSpecies: string;
   selectedEcosystem: string;
   onCountyClick?: (county: string) => void;
-  colorThresholds?: ColorThresholds;
+  colorThresholds?: number[];
+}
+
+// accepts two colors in hex format, and outputs an interpolated color
+function interpolate(clr1: string, clr2: string, val: number) {
+  const r1 = parseInt(clr1.substring(1, 3), 16);
+  const g1 = parseInt(clr1.substring(3, 5), 16);
+  const b1 = parseInt(clr1.substring(5, 7), 16);
+
+  const r2 = parseInt(clr2.substring(1, 3), 16);
+  const g2 = parseInt(clr2.substring(3, 5), 16);
+  const b2 = parseInt(clr2.substring(5, 7), 16);
+
+  let rFinal = Math.round(r1 + (r2 - r1) * val);
+  let gFinal = Math.round(g1 + (g2 - g1) * val);
+  let bFinal = Math.round(b1 + (b2 - b1) * val);
+
+  return `rgb(${rFinal}, ${gFinal}, ${bFinal})`;
 }
 
 function GeoJSONLayer({
@@ -68,25 +85,31 @@ function GeoJSONLayer({
   const layerRef = useRef<L.GeoJSON | null>(null);
 
   const getColor = useMemo(() => {
-    let q1: number, q2: number, q3: number, q4: number;
+    // let q1: number, q2: number, q3: number, q4: number;
+    let thresholds = [];
     if (colorThresholds) {
-      ({ q1, q2, q3, q4 } = colorThresholds);
+      thresholds = colorThresholds;
     } else {
       const field: FeatureValueField = layerType === "extents" ? "total_area_km2" : "total_exchange_value";
       const values = geoData.features
         .map((f) => Number(f.properties[field]) || 0)
         .sort((a: number, b: number) => a - b);
-      q1 = values[Math.floor(values.length * 0.2)] || 0;
-      q2 = values[Math.floor(values.length * 0.4)] || 0;
-      q3 = values[Math.floor(values.length * 0.6)] || 0;
-      q4 = values[Math.floor(values.length * 0.8)] || 0;
+      
+      // calculate thresholds in 8ths
+      for (let i = 0; i < 8; i++) {
+        thresholds.push(values[Math.floor(values.length * (i/8))] || 0)
+      }
     }
     return (value: number) => {
-      if (value > q4) return "#7f0000";
-      if (value > q3) return "#970d0d";
-      if (value > q2) return "#892718";
-      if (value > q1) return "#fc8d59";
-      return "#fdd49e";
+      const maximum = "#ff2600"
+      const minimum = "#fae675"
+
+      for (let i = thresholds.length - 1; i >= 0; i--) {
+        if (value > thresholds[i]) {
+          return interpolate(minimum, maximum, (i+1) / thresholds.length);
+        }
+      }
+      return interpolate(minimum, maximum, 0);
     };
   }, [geoData, layerType, colorThresholds]);
 
@@ -117,7 +140,7 @@ function GeoJSONLayer({
         const isSelected = selectedCounty !== "" && featureKey === selectedCounty;
         return {
           fillColor: getColor(value),
-          fillOpacity: isSelected ? 0.9 : 0.55,
+          fillOpacity: isSelected ? 0.95 : 0.65,
           color: isSelected ? "#d94801" : "#222",
           weight: isSelected ? 2.5 : 0.8,
         };
@@ -172,7 +195,7 @@ function GeoJSONLayer({
               ? feature.properties.area_id
               : feature.properties.county;
             const isSel = selectedCounty !== "" && featureKey === selectedCounty;
-            e.target.setStyle({ fillOpacity: isSel ? 0.9 : 0.55 });
+            e.target.setStyle({ fillOpacity: isSel ? 0.95 : 0.65 });
           },
         });
       },
@@ -207,12 +230,12 @@ export default function Map({
   const position: LatLngExpression = [20.5, -157.5];
 
   return (
-    <div style={{ height: "100vh" }}>
+    <div style={{ width: "100%", height: "100%" }}>
       <MapContainer
         center={position}
         zoom={7}
         zoomControl={false}
-        style={{ height: "100vh", width: "100%" }}
+        style={{ width: "100%", height: "100%" }}
       >
         <TileLayer
           attribution="Tiles &copy; Esri"
