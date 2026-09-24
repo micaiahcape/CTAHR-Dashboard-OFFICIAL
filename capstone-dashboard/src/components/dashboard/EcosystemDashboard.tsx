@@ -78,6 +78,15 @@ function parseNoncommGeoJSON(geojson: GeoJSON): DataRow[] {
     .filter((r: DataRow) => r.exchange_value > 0);
 }
 
+/*******************
+ * Returns rows like this:
+ * 
+ * [{year: <year>, county: <county>, area_id: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, {...}, ...]
+ * 
+ * 
+ * 
+ ************************/
+
 function parseCommGeoJSON(geojson: GeoJSON): DataRow[] {
   const rows: DataRow[] = [];
   for (const feat of geojson.features) {
@@ -91,7 +100,9 @@ function parseCommGeoJSON(geojson: GeoJSON): DataRow[] {
 
     for (let i = 0; i < years.length; i++) {
       const val = Number(values[i]) || 0;
-      if (val <= 0) continue;
+      if (val <= 0 || species[i] === "All Species" || ecosystems[i] === "All Ecosystems") continue;
+      // to prevent double counting, we skip rows that are "All Species" or "All Ecosystems." These values are broken down by specific species and specific ecosystems, which we could use to tally up.
+      
       rows.push({
         year: Number(years[i]),
         county,
@@ -102,6 +113,7 @@ function parseCommGeoJSON(geojson: GeoJSON): DataRow[] {
       });
     }
   }
+  console.log(rows)
   return rows;
 }
 
@@ -487,15 +499,9 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
         allTotals[key] = (allTotals[key] || 0) + row.area_km2;
       });
       const sorted = Object.values(allTotals).sort((a, b) => a - b);
+      console.log(sorted)
+      return [sorted[Math.floor(sorted.length*0.1)], sorted[Math.floor(sorted.length*0.9)]];
 
-      let eighths = []
-
-      for (let i = 0; i < 8; i++) {
-        eighths.push(sorted[Math.floor(sorted.length * (i/8))] || 0)
-      }
-      
-      return eighths;
-      
     } else {
       // Build full moku/county totals from ALL fisheries rows (no filter)
       const allTotals: Record<string, number> = {};
@@ -503,14 +509,8 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
         allTotals[row.area_id] = (allTotals[row.area_id] || 0) + row.exchange_value;
       });
       const sorted = Object.values(allTotals).sort((a, b) => a - b);
-
-      let eighths = []
-
-      for (let i = 0; i < 8; i++) {
-        eighths.push(sorted[Math.floor(sorted.length * (i/8))] || 0)
-      }
-      
-      return eighths;
+      console.log(sorted)
+      return [sorted[Math.floor(sorted.length*0.1)], sorted[Math.floor(sorted.length*0.9)]];
     }
   })();
 

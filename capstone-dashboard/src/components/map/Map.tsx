@@ -49,7 +49,7 @@ interface MapProps {
   selectedSpecies: string;
   selectedEcosystem: string;
   onCountyClick?: (county: string) => void;
-  colorThresholds?: number[];
+  colorThresholds?: number[]; // an array containing two numbers: the 10th and 90th percentiles. Any number that falls on either side of that extreme will default to the color on that end. Otherwise, the color will be calculated by linear interpolation.
 }
 
 // accepts two colors in hex format, and outputs an interpolated color
@@ -86,7 +86,8 @@ function GeoJSONLayer({
 
   const getColor = useMemo(() => {
     // let q1: number, q2: number, q3: number, q4: number;
-    let thresholds = [];
+    let thresholds = []
+    let numberOfSegments = 5;
     if (colorThresholds) {
       thresholds = colorThresholds;
     } else {
@@ -95,21 +96,25 @@ function GeoJSONLayer({
         .map((f) => Number(f.properties[field]) || 0)
         .sort((a: number, b: number) => a - b);
       
-      // calculate thresholds in 8ths
-      for (let i = 0; i < 8; i++) {
-        thresholds.push(values[Math.floor(values.length * (i/8))] || 0)
-      }
+      // calculate thresholds - the 10th and 90th percentiles.
+      console.log(values)
+      thresholds = [values[Math.floor(values.length*0.1)], values[Math.floor(values.length*0.9)]];
     }
     return (value: number) => {
       const maximum = "#ff2600"
       const minimum = "#fae675"
 
-      for (let i = thresholds.length - 1; i >= 0; i--) {
-        if (value > thresholds[i]) {
-          return interpolate(minimum, maximum, (i+1) / thresholds.length);
-        }
+      let prop = (value - thresholds[0]) / (thresholds[1] - thresholds[0]);
+      if (prop > 1) {
+        prop = 1;
+      } else if (prop < 0) {
+        prop = 0;
       }
-      return interpolate(minimum, maximum, 0);
+
+      console.log(thresholds)
+      const nearest_prop = (1 / numberOfSegments) + Math.round(prop * numberOfSegments) / numberOfSegments;
+
+      return interpolate(minimum, maximum, nearest_prop);
     };
   }, [geoData, layerType, colorThresholds]);
 
