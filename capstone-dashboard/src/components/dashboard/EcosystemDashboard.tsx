@@ -81,9 +81,8 @@ function parseNoncommGeoJSON(geojson: GeoJSON): DataRow[] {
 /*******************
  * Returns rows like this:
  * 
- * [{year: <year>, county: <county>, area_id: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, {...}, ...]
- * 
- * 
+ * [{year: <year>, county: <county>, area_id: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, 
+ * {year: <year>, county: <county>, area_id: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, {...}, ...]
  * 
  ************************/
 
@@ -307,6 +306,12 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
 
       const speciesValues = [...new Set(rows.map((r) => r.species_group))].sort();
       const ecoValues = [...new Set(rows.map((r) => r.ecosystem_type))].sort();
+
+      // because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for the pickDefault function below.
+
+      speciesValues.unshift("All Species");
+      ecoValues.unshift("All Ecosystems");
+
       const pickDefault = (values: string[], aggregateLabel: string) =>
         values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
 
@@ -363,15 +368,23 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   const speciesGroups = [...new Set(rowData.map((d) => d.species_group))].sort();
   const ecosystemTypes = [...new Set(rowData.map((d) => d.ecosystem_type))].sort();
 
+  // because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for filter dropdowns.
+  speciesGroups.unshift("All Species");
+  ecosystemTypes.unshift("All Ecosystems");
+
   const filteredRows = rowData.filter((row) => {
     return (
       (selectedYearStart === null || row.year >= selectedYearStart) &&
       (selectedYearEnd === null || row.year <= selectedYearEnd) &&
       (selectedCounty === "" || row.county === selectedCounty) &&
-      (selectedSpecies === "" || row.species_group === selectedSpecies) &&
-      (selectedEcosystem === "" || row.ecosystem_type === selectedEcosystem)
+      // when it's "All Species" or "All Ecosystems", the code "short circuits" and returns all species rows and/or ecosystem rows.
+      (selectedSpecies === "All Species" || row.species_group === selectedSpecies) &&
+      (selectedEcosystem === "All Ecosystems" || row.ecosystem_type === selectedEcosystem)
     );
   });
+
+  console.log("Filtered Rows is: ")
+  console.log(filteredRows)
 
   const totalsById: Record<string, number> = {};
   filteredRows.forEach((row) => {
@@ -761,10 +774,9 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
       <div className="central-panel">
         <div className="summary-display">
           {(layer === "fisheries") ? (
-            <p>{(dataset == "comm") ? "Commercial" : "Non-commercial"} fisheries data, with <span className="summary-highlight">{(selectedSpecies === "All Species") ? "ALL" : selectedSpecies.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(selectedEcosystem === "All Ecosystems") ? "ALL" : selectedEcosystem.toLocaleLowerCase()}</span> ecosystems: {selectedYearStart || "1997"}-{selectedYearEnd || new Date().getFullYear()}</p>
+            <p>{(dataset == "comm") ? "Commercial" : "Non-commercial"} fisheries data, with <span className="summary-highlight">{(selectedSpecies === "All Species") ? "ALL" : selectedSpecies.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(selectedEcosystem === "All Ecosystems") ? "ALL" : selectedEcosystem.toLocaleLowerCase()}</span> ecosystems: {selectedYearStart || years[0]}-{selectedYearEnd || years[years.length-1]}</p>
           ) : (
-            <p>Ecosystem extents data, with <span className="summary-highlight">{(selectedExtentsEcosystem === "") ? "ALL" : selectedExtentsEcosystem.toLocaleLowerCase()}</span> ecosystems: {selectedYearStart || "1997"}-{selectedYearEnd || new Date().getFullYear()}</p>
-
+            <p>Ecosystem extents data, with <span className="summary-highlight">{(selectedExtentsEcosystem === "") ? "ALL" : selectedExtentsEcosystem.toLocaleLowerCase()}</span> ecosystems: {selectedYearStart || years[0]}-{selectedYearEnd || years[years.length-1]}</p>
           )}
           
         </div>
@@ -782,8 +794,6 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
         />
       </div>
       
-     
-
       {/* Right panel */}
       <div className="right-panel">
 
