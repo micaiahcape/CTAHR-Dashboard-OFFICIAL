@@ -372,7 +372,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   speciesGroups.unshift("All Species");
   ecosystemTypes.unshift("All Ecosystems");
 
-  const filteredRows = rowData.filter((row) => {
+  const filteredFisheryRows = rowData.filter((row) => {
     return (
       (selectedYearStart === null || row.year >= selectedYearStart) &&
       (selectedYearEnd === null || row.year <= selectedYearEnd) &&
@@ -384,12 +384,15 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   });
 
   console.log("Filtered Rows is: ")
-  console.log(filteredRows)
+  console.log(filteredFisheryRows)
 
-  const totalsById: Record<string, number> = {};
-  filteredRows.forEach((row) => {
-    totalsById[row.area_id] = (totalsById[row.area_id] || 0) + row.exchange_value;
+  const filteredTotalsById: Record<string, number> = {};
+  filteredFisheryRows.forEach((row) => {
+    filteredTotalsById[row.area_id] = (filteredTotalsById[row.area_id] || 0) + row.exchange_value;
   });
+
+  console.log("Totals by ID:")
+  console.log(filteredTotalsById)
 
   const aggregatedGeoJSON = {
     ...geoData,
@@ -402,7 +405,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
           ...feature,
           properties: {
             ...feature.properties,
-            total_exchange_value: totalsById[key] || 0,
+            total_exchange_value: filteredTotalsById[key] || 0,
           },
         };
       })
@@ -498,6 +501,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
 
   // Stable color scale thresholds — computed from ALL data, not filtered,
   // so polygon colors don't shift when filters change.
+  /* As of 9/24/26, not in use. The dynamic color scale thresholds (computeColorThresholds) are used below. */
   const stableColorThresholds = (() => {
     if (layer === "extents") {
       // Build full moku+realm totals from ALL extents rows (no filter)
@@ -522,10 +526,29 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
         allTotals[row.area_id] = (allTotals[row.area_id] || 0) + row.exchange_value;
       });
       const sorted = Object.values(allTotals).sort((a, b) => a - b);
-      console.log(sorted)
       return [sorted[Math.floor(sorted.length*0.1)], sorted[Math.floor(sorted.length*0.9)]];
     }
   })();
+
+  const computedColorThresholds = (() => {
+    const sorted = Object.values(filteredTotalsById).sort((a, b) => a - b);
+    const percent5 = sorted[Math.floor(sorted.length * 0.05)]
+    const percent95 = sorted[Math.floor(sorted.length * 0.95)]
+    
+    console.log([percent5, percent95])
+    // determine which place value to round it to.
+    const lower_bound_length = Math.trunc(percent5).toString().length;
+    const digits_to_round = lower_bound_length - 1
+
+    console.log(digits_to_round)
+
+    const fixed_lower_bound = Math.floor(percent5 / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
+    const fixed_upper_bound = Math.ceil(percent95 / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
+
+    console.log([fixed_lower_bound, fixed_upper_bound])
+
+    return [fixed_lower_bound, fixed_upper_bound]
+  }) ();
 
   // ----------------------------------
   // Download helpers
@@ -564,13 +587,13 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
 
     if (mode === "ONE_COUNTY") {
       if (!county) return;
-      const csv = buildCsvFromRows(filteredRows.filter((r) => r.county === county));
+      const csv = buildCsvFromRows(filteredFisheryRows.filter((r) => r.county === county));
       triggerCsvDownload(`${[dataset, safe(county), ...base].join("_")}.csv`, csv);
       return;
     }
 
     const grouped: Record<string, DataRow[]> = {};
-    filteredRows.forEach((r) => {
+    filteredFisheryRows.forEach((r) => {
       (grouped[r.county || "Unknown"] ||= []).push(r);
     });
     Object.entries(grouped).forEach(([c, rows], i) => {
@@ -624,7 +647,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   // Viz panel data
   // ----------------------------------
   const panelRows = selectedArea
-    ? filteredRows.filter((r) => r.area_id === selectedArea)
+    ? filteredFisheryRows.filter((r) => r.area_id === selectedArea)
     : [];
 
   const byYear: Record<number, number> = {};
@@ -790,7 +813,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
           selectedSpecies={selectedSpecies}
           selectedEcosystem={layer === "extents" ? selectedExtentsEcosystem : selectedEcosystem}
           onCountyClick={handleAreaClick}
-          colorThresholds={stableColorThresholds}
+          colorThresholds={computedColorThresholds}
         />
       </div>
       
