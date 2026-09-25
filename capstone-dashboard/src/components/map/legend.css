@@ -1,0 +1,50 @@
+.legendBox {
+    width: 30%;
+    position: absolute;
+    transform: translate(0%, -100%);
+    bottom: -5%;
+    left: 4%;
+    z-index: 999;
+    border-radius: 5px;
+    background: rgba(10, 10, 10, 0.6);
+    padding: 0.5% 1.5%;
+    border: 1px solid #1c1c1c;
+}
+
+.legendHolder {
+    width: 100%;
+    height: 5vh;
+}
+
+.scaleBarHolder {
+    display: flex;
+    width: 100%;
+    height: 3vh;
+    padding: 1% 0;
+}
+
+.indivScaleBar {
+    height: 100%;
+    border: 1px solid black;
+}
+
+.unitDisplay {
+    color: #ccc;
+    font-size: 15px;
+    padding: 1% 0;
+}
+
+.indivScaleText {
+    position: absolute;
+    text-align: center;
+    font-size: 10px;
+    transform: translate(-50%, 0%);
+    top: 20%;
+    color: lightgrey;
+    opacity: 0.7;
+}
+
+.scaleLabelHolder {
+    position: relative;
+    width: 100%;
+}

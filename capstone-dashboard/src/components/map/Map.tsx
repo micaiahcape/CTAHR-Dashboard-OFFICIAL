@@ -11,8 +11,11 @@ import { useEffect, useRef, useMemo } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 import type { GeoJsonObject } from "geojson";
+import dynamic from "next/dynamic";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+const Legend = dynamic(() => import("../map/Legend"), { ssr: false });
 
 type LayerType = "fisheries" | "extents";
 type FeatureValueField = "total_area_km2" | "total_exchange_value";
@@ -236,6 +239,14 @@ export default function Map({
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
+
+      <Legend 
+        numericalThresholds={colorThresholds}
+        colorRange={["#fae675", "#ff2600"]}
+        numWholeSegments={3}
+        unit="Total Exchange Value (USD)"
+      />
+      
       <MapContainer
         center={position}
         zoom={7}

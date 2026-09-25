@@ -112,7 +112,6 @@ function parseCommGeoJSON(geojson: GeoJSON): DataRow[] {
       });
     }
   }
-  console.log(rows)
   return rows;
 }
 
@@ -383,16 +382,10 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
     );
   });
 
-  console.log("Filtered Rows is: ")
-  console.log(filteredFisheryRows)
-
   const filteredTotalsById: Record<string, number> = {};
   filteredFisheryRows.forEach((row) => {
     filteredTotalsById[row.area_id] = (filteredTotalsById[row.area_id] || 0) + row.exchange_value;
   });
-
-  console.log("Totals by ID:")
-  console.log(filteredTotalsById)
 
   const aggregatedGeoJSON = {
     ...geoData,
@@ -516,7 +509,6 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
         allTotals[key] = (allTotals[key] || 0) + row.area_km2;
       });
       const sorted = Object.values(allTotals).sort((a, b) => a - b);
-      console.log(sorted)
       return [sorted[Math.floor(sorted.length*0.1)], sorted[Math.floor(sorted.length*0.9)]];
 
     } else {
@@ -534,14 +526,9 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
     const sorted = Object.values(filteredTotalsById).sort((a, b) => a - b);
     const percent5 = sorted[Math.floor(sorted.length * 0.05)]
     const percent95 = sorted[Math.floor(sorted.length * 0.95)]
-    
-    console.log([percent5, percent95])
     // determine which place value to round it to.
     const lower_bound_length = Math.trunc(percent5).toString().length;
     const digits_to_round = lower_bound_length - 1
-
-    console.log(digits_to_round)
-
     const fixed_lower_bound = Math.floor(percent5 / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
     const fixed_upper_bound = Math.ceil(percent95 / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
 
@@ -793,7 +780,6 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
       />
 
       {/* Map */}
-      
       <div className="central-panel">
         <div className="summary-display">
           {(layer === "fisheries") ? (
@@ -803,6 +789,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
           )}
           
         </div>
+
         <Map
           mapType={dataset}
           layerType={layer}
@@ -815,6 +802,10 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
           onCountyClick={handleAreaClick}
           colorThresholds={computedColorThresholds}
         />
+
+        <div style={{ position: "absolute", left: "30%", top: "50%"}}>
+         
+        </div>
       </div>
       
       {/* Right panel */}
