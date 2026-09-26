@@ -56,6 +56,7 @@ export default function Legend({
 
     return (
         <div className="legendBox">
+            <p>Edit</p>
             <p className="unitDisplay">{unit}</p>
             <div className="legendHolder">
                 <div className="scaleBarHolder">

@@ -214,7 +214,7 @@ export default function Map({
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
-  const numWholeSegments = 2;
+  const numWholeSegments =2;
   const colorRange: [string, string] = ["#ddff00", "#ff2f00"]
 
   const recalculatedThresholds = (() => {
