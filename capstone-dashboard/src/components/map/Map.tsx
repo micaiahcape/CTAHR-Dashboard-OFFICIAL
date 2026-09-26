@@ -7,7 +7,7 @@
  */
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useState} from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 import type { GeoJsonObject } from "geojson";
@@ -214,8 +214,18 @@ export default function Map({
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
-  const numWholeSegments =2;
-  const colorRange: [string, string] = ["#ddff00", "#ff2f00"]
+  const [numWholeSegments, setNumWholeSegments] = useState<number>(2)
+  const [colorRange, setColorRange] = useState<[string, string]>(["#ddff00", "#ff2f00"])
+
+  const handleSegmentChange = (seg: number) => {
+    setNumWholeSegments(seg)
+  }
+
+  const handleClrChange = (clr: string, id: number) => {
+    const newArray: [string, string] = [...colorRange]
+    newArray[id] = clr
+    setColorRange(newArray)
+  }
 
   const recalculatedThresholds = (() => {
     const increment = (outliers[1] - outliers[0]) / numWholeSegments
@@ -244,6 +254,8 @@ export default function Map({
         numericalThresholds={recalculatedThresholds}
         colorRange={colorRange}
         unit="Total Exchange Value (USD)"
+        onSendClrData={handleClrChange}
+        onSendSegmentData={handleSegmentChange}
       />
       
       <MapContainer

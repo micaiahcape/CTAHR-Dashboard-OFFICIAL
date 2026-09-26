@@ -5,12 +5,15 @@ Scale component. Takes:
 3) the number of segments to divide the scale into (not including outliers)
 */
 import { text } from "stream/consumers";
+import { useState, useEffect } from "react";
 import "./legend.css"
 
 interface LegendProps {
     numericalThresholds: number[];
     colorRange: [string, string];
     unit: string;
+    onSendClrData: (clr: string, id: number) => void;
+    onSendSegmentData: (clr: number) => void;
 }
 
 function interpolate(clr1: string, clr2: string, val: number) {
@@ -32,14 +35,19 @@ function interpolate(clr1: string, clr2: string, val: number) {
 export default function Legend({
     numericalThresholds, 
     colorRange, 
-    unit
+    unit,
+    onSendClrData,
+    onSendSegmentData
 }: LegendProps) {
-    const numWholeSegments = numericalThresholds.length - 1;
-    const wholeSegmentArray = Array(numWholeSegments).fill(0)
-    const scaleValuesArray = Array(numWholeSegments + 1).fill(0)
-    const finalValue = numericalThresholds[numWholeSegments]
 
+    const color1 = colorRange[0]
+    const color2 = colorRange[1]
+    const numWholeSegments = numericalThresholds.length - 1
+
+    const wholeSegmentArray = numWholeSegments > 0 ? Array(numWholeSegments).fill(0) : Array(1).fill(0)
+    
     const scaleValuesDisplay = (() => {
+        const finalValue = numericalThresholds[numWholeSegments]
         const finalUnit = (finalValue > 1000000 ? "M" : "K")
 
         const fixedScaleValues: string[] = numericalThresholds.map((item: number): string => {
@@ -56,20 +64,30 @@ export default function Legend({
 
     return (
         <div className="legendBox">
-            <p>Edit</p>
+            <div className="editMenu">
+                <label htmlFor="lowColor">Color 1&nbsp;</label>
+                <input type="color" name="lowColor" value={color1} onChange={(e) => onSendClrData(e.target.value, 0)}/>
+                <br />
+                <label htmlFor="hiColor">Color 2&nbsp;</label>
+                <input type="color" name="hiColor" value={color2} onChange={(e) => onSendClrData(e.target.value, 1)}/>
+                <br />
+                <label htmlFor="numSegments"># colors: {numWholeSegments+2}</label>
+                <input type="range" name="numSegments" min={3} max={8} value={numWholeSegments+2} onChange={(e) => onSendSegmentData(Number(e.target.value) - 2)}/>
+            </div>
+
             <p className="unitDisplay">{unit}</p>
             <div className="legendHolder">
                 <div className="scaleBarHolder">
                     {/* lower outlier. Make the width half of a standard segment. */}
-                    <div className="indivScaleBar" style={{ backgroundColor: colorRange[0], width: `${100 / (numWholeSegments + 1) / 2}%` }} />
+                    <div className="indivScaleBar" style={{ backgroundColor: color1, width: `${100 / (numWholeSegments + 1) / 2}%` }} />
 
                     {/* standard segments. width = 100% / (numsegments + 1) */}
                     {wholeSegmentArray.map((_, index) => (
-                        <div key={index} className="indivScaleBar" style={{ backgroundColor: interpolate(colorRange[0], colorRange[1], (index + 1) / (numWholeSegments + 1)), width: `${100 / (numWholeSegments + 1)}%` }} />
+                        <div key={index} className="indivScaleBar" style={{ backgroundColor: interpolate(color1, color2, (index + 1) / (numWholeSegments + 1)), width: `${100 / (numWholeSegments + 1)}%` }} />
                     ))}
 
                     {/* upper outlier. Make the width half of a standard segment. */}
-                    <div className="indivScaleBar" style={{ backgroundColor: colorRange[1], width: `${100 / (numWholeSegments + 1) / 2}%` }} />
+                    <div className="indivScaleBar" style={{ backgroundColor: color2, width: `${100 / (numWholeSegments + 1) / 2}%` }} />
                     
                 </div>
 
