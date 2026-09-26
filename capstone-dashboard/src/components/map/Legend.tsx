@@ -8,9 +8,8 @@ import { text } from "stream/consumers";
 import "./legend.css"
 
 interface LegendProps {
-    numericalThresholds: any;
+    numericalThresholds: number[];
     colorRange: [string, string];
-    numWholeSegments: number;
     unit: string;
 }
 
@@ -33,12 +32,28 @@ function interpolate(clr1: string, clr2: string, val: number) {
 export default function Legend({
     numericalThresholds, 
     colorRange, 
-    numWholeSegments,
     unit
 }: LegendProps) {
-
+    const numWholeSegments = numericalThresholds.length - 1;
     const wholeSegmentArray = Array(numWholeSegments).fill(0)
-    const scaleValuesArray = Array(numWholeSegments+1).fill(0)
+    const scaleValuesArray = Array(numWholeSegments + 1).fill(0)
+    const finalValue = numericalThresholds[numWholeSegments]
+
+    const scaleValuesDisplay = (() => {
+        const finalUnit = (finalValue > 1000000 ? "M" : "K")
+
+        const fixedScaleValues: string[] = numericalThresholds.map((item: number): string => {
+            if (item < 100000 || (item < 1000000 && finalUnit == "K")) {
+                return (item / 1000) + "K"
+            } else if (item > 100000 || (item < 1000000 && finalUnit == "M")) {
+                return (item / 1000000) + "M"
+            }
+            return ""
+        })
+
+        return fixedScaleValues;
+    }) ();
+
     return (
         <div className="legendBox">
             <p className="unitDisplay">{unit}</p>
@@ -58,11 +73,10 @@ export default function Legend({
                 </div>
 
                 <div className="scaleLabelHolder">
-                    {scaleValuesArray.map((_, index) => {
+                    {scaleValuesDisplay.map((item: string, index: number) => {
                         const computedLeft = `${(100 / (numWholeSegments + 1) / 2) + (index * (100 / (numWholeSegments + 1)))}%`
-                        const computedValue = numericalThresholds[0] + (index / numWholeSegments) * (numericalThresholds[1] - numericalThresholds[0])
                         return (
-                            <p className="indivScaleText" style={{ left: computedLeft }}>{computedValue}</p>
+                            <p className="indivScaleText" style={{ left: computedLeft }}>{item}</p>
                         )
                     })}
                 </div>

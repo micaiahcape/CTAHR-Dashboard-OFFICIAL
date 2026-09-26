@@ -26,6 +26,7 @@
 .indivScaleBar {
     height: 100%;
     border: 1px solid black;
+    opacity: 0.9;
 }
 
 .unitDisplay {
@@ -37,7 +38,7 @@
 .indivScaleText {
     position: absolute;
     text-align: center;
-    font-size: 10px;
+    font-size: 12px;
     transform: translate(-50%, 0%);
     top: 20%;
     color: lightgrey;
