@@ -524,8 +524,8 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
 
   const computedColorThresholds = (() => {
     const sorted = Object.values(filteredTotalsById).sort((a, b) => a - b);
-    const percent5 = Math.round(sorted[Math.floor(sorted.length * 0.05)])
-    const percent95 = Math.round(sorted[Math.floor(sorted.length * 0.95)])
+    const percent5 = Math.round(sorted[Math.floor(sorted.length * 0.1)])
+    const percent95 = Math.round(sorted[Math.floor(sorted.length * 0.9)])
 
     const res: [number, number] = [percent5, percent95]
 

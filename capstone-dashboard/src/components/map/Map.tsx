@@ -7,7 +7,7 @@
  */
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useState} from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 import type { GeoJsonObject } from "geojson";
@@ -214,8 +214,29 @@ export default function Map({
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
-  const numWholeSegments =2;
-  const colorRange: [string, string] = ["#ddff00", "#ff2f00"]
+  const [numWholeSegments, setNumWholeSegments] = useState<number>(2)
+  const [colorRange, setColorRange] = useState<[string, string]>(["#FFFFFF", "#ff2f00"])
+
+  /* const handleSegmentChange = (seg: number) => {
+    setNumWholeSegments(seg)
+  }
+
+  const handleClrChange = (clr: string, id: number) => {
+    const newArray: [string, string] = [...colorRange]
+    newArray[id] = clr
+    setColorRange(newArray)
+  } */
+
+  // only updates when user presses "submit."
+  const handleColorChange = (clr1: string, clr2: string) => {
+    const newArray: [string, string] = [clr1, clr2]
+    setColorRange(newArray)
+  }
+
+  // updates whenever user drags the slider on the legend.
+  const handleSegmentChange = (seg: number) => {
+    setNumWholeSegments(seg)
+  }
 
   const recalculatedThresholds = (() => {
     const increment = (outliers[1] - outliers[0]) / numWholeSegments
@@ -243,7 +264,10 @@ export default function Map({
       <Legend 
         numericalThresholds={recalculatedThresholds}
         colorRange={colorRange}
+        defaultColorRange={colorRange}
         unit="Total Exchange Value (USD)"
+        onChangeColor={handleColorChange}
+        onChangeSegment={handleSegmentChange}
       />
       
       <MapContainer
