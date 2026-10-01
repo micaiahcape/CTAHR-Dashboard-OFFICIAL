@@ -215,9 +215,9 @@ export default function Map({
   const position: LatLngExpression = [20.5, -157.5];
 
   const [numWholeSegments, setNumWholeSegments] = useState<number>(2)
-  const [colorRange, setColorRange] = useState<[string, string]>(["#ddff00", "#ff2f00"])
+  const [colorRange, setColorRange] = useState<[string, string]>(["#FFFFFF", "#ff2f00"])
 
-  const handleSegmentChange = (seg: number) => {
+  /* const handleSegmentChange = (seg: number) => {
     setNumWholeSegments(seg)
   }
 
@@ -225,6 +225,17 @@ export default function Map({
     const newArray: [string, string] = [...colorRange]
     newArray[id] = clr
     setColorRange(newArray)
+  } */
+
+  // only updates when user presses "submit."
+  const handleColorChange = (clr1: string, clr2: string) => {
+    const newArray: [string, string] = [clr1, clr2]
+    setColorRange(newArray)
+  }
+
+  // updates whenever user drags the slider on the legend.
+  const handleSegmentChange = (seg: number) => {
+    setNumWholeSegments(seg)
   }
 
   const recalculatedThresholds = (() => {
@@ -253,9 +264,10 @@ export default function Map({
       <Legend 
         numericalThresholds={recalculatedThresholds}
         colorRange={colorRange}
+        defaultColorRange={colorRange}
         unit="Total Exchange Value (USD)"
-        onSendClrData={handleClrChange}
-        onSendSegmentData={handleSegmentChange}
+        onChangeColor={handleColorChange}
+        onChangeSegment={handleSegmentChange}
       />
       
       <MapContainer
