@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "./dashboard.css";
 import FilterSidebar from "./FilterSidebar";
+import FisheriesFilterMenu from "./FisheriesFilterMenu";
 
 const Map = dynamic(() => import("../map/Map"), { ssr: false });
 
@@ -370,6 +371,15 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   // because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for filter dropdowns.
   speciesGroups.unshift("All Species");
   ecosystemTypes.unshift("All Ecosystems");
+
+  const handleFilterChange = (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string, selectedDataset: "noncomm" | "comm") => {
+    setSelectedYearStart(yearStart);
+    setSelectedYearEnd(yearEnd);
+    setSelectedCounty(county);
+    setSelectedSpecies(species);
+    setSelectedEcosystem(ecosystem);
+    setDataset(selectedDataset);
+  }
 
   const filteredFisheryRows = rowData.filter((row) => {
     return (
@@ -982,154 +992,15 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
             )}
 
             {/* ── FISHERIES FILTERS ── */}
-            {layer === "fisheries" && (
-              <>
-                {/* Reset */}
-                <div className="rp-section">
-                  <button
-                    className="filter-btn"
-                    style={{ width: "100%" }}
-                    onClick={() => {
-                      setSelectedCounty("");
-                      setSelectedYearStart(null);
-                      setSelectedYearEnd(null);
-                      setSelectedSpecies(speciesGroups.includes("All Species") ? "All Species" : speciesGroups[0] ?? "");
-                      setSelectedEcosystem(ecosystemTypes.includes("All Ecosystems") ? "All Ecosystems" : ecosystemTypes[0] ?? "");
-                    }}
-                  >
-                    ↺ Reset Filters
-                  </button>
-                </div>
-
-                {/* Data Source */}
-                <div className="rp-section">
-                  <div className="filter-label">Data Source</div>
-                  <select
-                    className="filter-select"
-                    value={dataset}
-                    onChange={(e) => setDataset(e.target.value as "noncomm" | "comm")}
-                  >
-                    <option value="noncomm">Non-Commercial</option>
-                    <option value="comm">Commercial</option>
-                  </select>
-                </div>
-
-                {/* County */}
-                <div className="rp-section">
-                  <div className="filter-label">County</div>
-                  <select
-                    className="filter-select"
-                    value={selectedCounty}
-                    onChange={(e) => setSelectedCounty(e.target.value)}
-                  >
-                    <option value="">All Counties</option>
-                    {counties.map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Year Range */}
-                <div className="rp-section">
-                  <div className="filter-label">Year Range</div>
-                  <div className="year-range-row">
-                    <select
-                      className="filter-select"
-                      value={selectedYearStart ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value === "" ? null : Number(e.target.value);
-                        setSelectedYearStart(val);
-                        if (val !== null && selectedYearEnd !== null && val > selectedYearEnd) {
-                          setSelectedYearEnd(null);
-                        }
-                      }}
-                    >
-                      <option value="">Start</option>
-                      {years.map((y) => <option key={y}>{y}</option>)}
-                    </select>
-                    <span className="year-range-arrow">→</span>
-                    <select
-                      className="filter-select"
-                      value={selectedYearEnd ?? ""}
-                      onChange={(e) =>
-                        setSelectedYearEnd(e.target.value === "" ? null : Number(e.target.value))
-                      }
-                    >
-                      <option value="">End</option>
-                      {years
-                        .filter((y) => selectedYearStart === null || y >= selectedYearStart)
-                        .map((y) => <option key={y}>{y}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Species Group */}
-                <div className="rp-section">
-                  <div className="filter-label">Species Group</div>
-                  <div className="button-group">
-                    {speciesGroups.map((s) => (
-                      <button
-                        key={s}
-                        className={`filter-btn ${selectedSpecies === s ? "active" : ""}`}
-                        onClick={() => setSelectedSpecies(s)}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Ecosystem Type */}
-                <div className="rp-section">
-                  <div className="filter-label">Ecosystem Type</div>
-                  <div className="button-group">
-                    {ecosystemTypes.map((e) => (
-                      <button
-                        key={e}
-                        className={`filter-btn ${selectedEcosystem === e ? "active" : ""}`}
-                        onClick={() => setSelectedEcosystem(e)}
-                      >
-                        {e}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Download */}
-                <div className="rp-section">
-                  <div className="filter-label">Download CSV</div>
-                  <select
-                    className="filter-select"
-                    value={downloadMode}
-                    onChange={(e) => setDownloadMode(e.target.value as "ALL_SEPARATE" | "ONE_COUNTY")}
-                  >
-                    <option value="ONE_COUNTY">One county</option>
-                    <option value="ALL_SEPARATE">All counties (separate files)</option>
-                  </select>
-
-                  {downloadMode === "ONE_COUNTY" && (
-                    <select
-                      className="filter-select"
-                      value={downloadCounty}
-                      onChange={(e) => setDownloadCounty(e.target.value)}
-                      style={{ marginTop: 8 }}
-                    >
-                      <option value="">Choose a county…</option>
-                      {counties.map((c) => <option key={c}>{c}</option>)}
-                    </select>
-                  )}
-
-                  <button
-                    className="filter-btn"
-                    style={{ marginTop: 10 }}
-                    onClick={() => handleDownload(downloadMode, downloadMode === "ONE_COUNTY" ? downloadCounty : undefined)}
-                    disabled={downloadMode === "ONE_COUNTY" && !downloadCounty}
-                  >
-                    Download CSV
-                  </button>
-                </div>
-              </>
-            )}
+            {layer === "fisheries" && 
+              <FisheriesFilterMenu 
+                speciesGroups={speciesGroups}
+                ecosystemTypes={ecosystemTypes}
+                yearRange={[years[0], years[years.length-1]]}
+                counties={counties}
+                onChangeFilter={handleFilterChange}
+              />
+            }
 
           </div>
         )}

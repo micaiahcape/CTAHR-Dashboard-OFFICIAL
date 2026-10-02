@@ -4,6 +4,8 @@
  */
 'use client';
 import EcosystemDashboard from "@/components/dashboard/EcosystemDashboard";
+import "multi-range-slider-react/lib/multirangeslider.css";
+import "multi-range-slider-react/lib/multirangesliderblack.css";
 
 export default function Home() {
   return (
