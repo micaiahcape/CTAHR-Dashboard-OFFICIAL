@@ -28,16 +28,10 @@ export default function FilterSidebar({ layer, setLayer, onLayerChange }: Filter
 
       <div
         className={`left-nav-item ${layer === "fisheries" ? "active" : ""}`}
-        onClick={() => handleLayer("fisheries")}
-      >
-        Fisheries
-      </div>
+        onClick={() => handleLayer("fisheries")}>Fisheries</div>
       <div
         className={`left-nav-item ${layer === "extents" ? "active" : ""}`}
-        onClick={() => handleLayer("extents")}
-      >
-        Ecosystem Extents
-      </div>
+        onClick={() => handleLayer("extents")}>Ecosystem Extents</div>
     </div>
   );
 }
