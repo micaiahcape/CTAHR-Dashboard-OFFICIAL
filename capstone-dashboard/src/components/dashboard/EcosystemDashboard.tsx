@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import "./dashboard.css";
 import FilterSidebar from "./FilterSidebar";
 import FisheriesFilterMenu from "./FisheriesFilterMenu";
+import { StringDecoder } from "node:string_decoder";
 
 const Map = dynamic(() => import("../map/Map"), { ssr: false });
 
@@ -76,7 +77,7 @@ function parseNoncommGeoJSON(geojson: GeoJSON): DataRow[] {
         exchange_value: Number(p.exchange_value) || 0,
       } as DataRow;
     })
-    .filter((r: DataRow) => r.exchange_value > 0);
+    .filter((r: DataRow) => (r.exchange_value > 0 && r.species_group != "All Species" && r.ecosystem_type != "All Ecosystems"));
 }
 
 /*******************
@@ -301,6 +302,8 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
 
       // const rows = parseCommGeoJSON(dataGeo);
 
+      console.log(rows)
+
       setGeoData(dataset === "comm" ? dataGeo : geo);
       setRowData(rows);
 
@@ -309,8 +312,13 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
 
       // because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for the pickDefault function below.
 
-      speciesValues.unshift("All Species");
-      ecoValues.unshift("All Ecosystems");
+      if (speciesValues.length > 1) {
+        speciesValues.unshift("All Species");
+      }
+
+      if (ecoValues.length > 1) {
+        ecoValues.unshift("All Ecosystems");
+      }
 
       const pickDefault = (values: string[], aggregateLabel: string) =>
         values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
@@ -368,17 +376,26 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   const speciesGroups = [...new Set(rowData.map((d) => d.species_group))].sort();
   const ecosystemTypes = [...new Set(rowData.map((d) => d.ecosystem_type))].sort();
 
-  // because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for filter dropdowns.
-  speciesGroups.unshift("All Species");
-  ecosystemTypes.unshift("All Ecosystems");
+  console.log("======= PROPS BEFORE IT GETS SENT TO CHILD =======")
+  console.log(speciesGroups.toString())
+  console.log(years.toString())
+  console.log(ecosystemTypes.toString())
 
-  const handleFilterChange = (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string, selectedDataset: "noncomm" | "comm") => {
+  // because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for filter dropdowns.
+  if (speciesGroups.length > 1) {
+    speciesGroups.unshift("All Species");
+  }
+  
+  if (ecosystemTypes.length > 1) {
+    ecosystemTypes.unshift("All Ecosystems");
+  }
+
+  const handleFilterChange = (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => {
     setSelectedYearStart(yearStart);
     setSelectedYearEnd(yearEnd);
     setSelectedCounty(county);
     setSelectedSpecies(species);
     setSelectedEcosystem(ecosystem);
-    setDataset(selectedDataset);
   }
 
   const filteredFisheryRows = rowData.filter((row) => {
@@ -994,11 +1011,14 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
             {/* ── FISHERIES FILTERS ── */}
             {layer === "fisheries" && 
               <FisheriesFilterMenu 
+                key={dataset} // force a rerender when dataset changes.
+                dataset={dataset}
                 speciesGroups={speciesGroups}
                 ecosystemTypes={ecosystemTypes}
                 yearRange={[years[0], years[years.length-1]]}
                 counties={counties}
                 onChangeFilter={handleFilterChange}
+                onChangeDataset={(d) => setDataset(d)}
               />
             }
 

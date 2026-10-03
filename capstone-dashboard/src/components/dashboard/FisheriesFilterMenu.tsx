@@ -9,7 +9,9 @@ interface FilterProps {
     ecosystemTypes: string[];
     counties: string[];
     yearRange: [number, number];
-    onChangeFilter: (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string, dataset: "noncomm" | "comm") => void;
+    dataset: string;
+    onChangeFilter: (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => void;
+    onChangeDataset: (dataset: "noncomm" | "comm") => void;
 }
 
 export default function FisheriesFilterMenu({
@@ -17,18 +19,31 @@ export default function FisheriesFilterMenu({
     ecosystemTypes,
     counties,
     yearRange,
+    dataset,
     onChangeFilter,
+    onChangeDataset
 } : FilterProps) {
     const [selectedSpecies, setSelectedSpecies] = React.useState(speciesGroups.includes("All Species") ? "All Species" : speciesGroups[0] ?? "")
     const [selectedEcosystem, setSelectedEcosystem] = React.useState(ecosystemTypes.includes("All Ecosystems") ? "All Ecosystems" : ecosystemTypes[0] ?? "")
-    const [selectedDataset, setSelectedDataset] = React.useState<"noncomm" | "comm">("noncomm")
+    const [selectedDataset, setSelectedDataset] = React.useState(dataset)
     const [currentYearRange, setCurrentYearRange] = React.useState(yearRange)
     const [selectedCounty, setSelectedCounty] = React.useState("")
 
+
+    // every time the state updates, send to the parent.
     useEffect(() => {
         console.log("UPDATING");
-        onChangeFilter(currentYearRange[0], currentYearRange[1], selectedCounty, selectedSpecies, selectedEcosystem, selectedDataset)
-    }, [currentYearRange, selectedCounty, selectedSpecies, selectedEcosystem, selectedDataset])
+        onChangeFilter(currentYearRange[0], currentYearRange[1], selectedCounty, selectedSpecies, selectedEcosystem)
+    }, [currentYearRange, selectedCounty, selectedSpecies, selectedEcosystem])
+
+    /*useEffect(() => {
+        console.log("DATASET CHANGED");
+        setSelectedDataset(dataset)
+        setSelectedSpecies(speciesGroups.includes("All Species") ? "All Species" : speciesGroups[0] ?? "")
+        setSelectedEcosystem(ecosystemTypes.includes("All Ecosystems") ? "All Ecosystems" : ecosystemTypes[0] ?? "")
+        setCurrentYearRange([...yearRange])
+        setSelectedCounty("")
+    }, [dataset])*/
 
     const calculatedMarginLeft = (() => {
         const range = yearRange[1] - yearRange[0];
@@ -40,6 +55,10 @@ export default function FisheriesFilterMenu({
     return(
         <>
             {/* Reset */}
+            <div>{currentYearRange}, {selectedCounty}, {selectedSpecies}, {selectedEcosystem}, {selectedDataset}</div>
+            <div>{yearRange}</div>
+            <div>{speciesGroups}</div>
+            <div>{ecosystemTypes}</div>
             <div className="rp-section">
                 <button
                 className="filter-btn"
@@ -62,7 +81,7 @@ export default function FisheriesFilterMenu({
                 <select
                 className="filter-select"
                 value={selectedDataset}
-                onChange={(e) => setSelectedDataset(e.target.value as "noncomm" | "comm")}
+                onChange={(e) => onChangeDataset(e.target.value as "noncomm" | "comm")}
                 >
                 <option value="noncomm">Non-Commercial</option>
                 <option value="comm">Commercial</option>
@@ -92,7 +111,6 @@ export default function FisheriesFilterMenu({
                 </div>
                 
                 <ReactSlider 
-                defaultValue={yearRange}
                 value={currentYearRange}
                 minDistance={0}
                 pearling={true}
