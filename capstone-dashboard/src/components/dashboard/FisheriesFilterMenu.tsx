@@ -9,9 +9,7 @@ interface FilterProps {
     ecosystemTypes: string[];
     counties: string[];
     yearRange: [number, number];
-    dataset: string;
     onChangeFilter: (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => void;
-    onChangeDataset: (dataset: "noncomm" | "comm") => void;
 }
 
 export default function FisheriesFilterMenu({
@@ -19,13 +17,10 @@ export default function FisheriesFilterMenu({
     ecosystemTypes,
     counties,
     yearRange,
-    dataset,
     onChangeFilter,
-    onChangeDataset
 } : FilterProps) {
     const [selectedSpecies, setSelectedSpecies] = React.useState(speciesGroups.includes("All Species") ? "All Species" : speciesGroups[0] ?? "")
     const [selectedEcosystem, setSelectedEcosystem] = React.useState(ecosystemTypes.includes("All Ecosystems") ? "All Ecosystems" : ecosystemTypes[0] ?? "")
-    const [selectedDataset, setSelectedDataset] = React.useState(dataset)
     const [currentYearRange, setCurrentYearRange] = React.useState(yearRange)
     const [selectedCounty, setSelectedCounty] = React.useState("")
 
@@ -55,10 +50,10 @@ export default function FisheriesFilterMenu({
     return(
         <>
             {/* Reset */}
-            <div>{currentYearRange}, {selectedCounty}, {selectedSpecies}, {selectedEcosystem}, {selectedDataset}</div>
+            {/*<div>{currentYearRange}, {selectedCounty}, {selectedSpecies}, {selectedEcosystem}</div>
             <div>{yearRange}</div>
             <div>{speciesGroups}</div>
-            <div>{ecosystemTypes}</div>
+            <div>{ecosystemTypes}</div>*/}
             <div className="rp-section">
                 <button
                 className="filter-btn"
@@ -72,20 +67,6 @@ export default function FisheriesFilterMenu({
                 >
                 ↺ Reset Filters
                 </button>
-            </div>
-
-            {/* Data Source */}
-            
-            <div className="rp-section">
-                <div className="filter-label">Data Source</div>
-                <select
-                className="filter-select"
-                value={selectedDataset}
-                onChange={(e) => onChangeDataset(e.target.value as "noncomm" | "comm")}
-                >
-                <option value="noncomm">Non-Commercial</option>
-                <option value="comm">Commercial</option>
-                </select>
             </div>
 
             {/* County */}

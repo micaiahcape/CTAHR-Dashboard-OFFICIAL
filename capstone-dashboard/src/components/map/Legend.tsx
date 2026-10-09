@@ -9,9 +9,11 @@ import React, { useState, useEffect } from "react";
 import "./legend.css"
 
 interface LegendProps {
+    layer: string;
     numericalThresholds: number[];
     colorRange: [string, string];
     defaultColorRange: [string, string];
+    scaleColorList: string[];
     unit: string;
     onChangeColor: (clr1: string, clr2: string) => void;
     onChangeSegment: (seg: number) => void;
@@ -34,9 +36,11 @@ function interpolate(clr1: string, clr2: string, val: number) {
 }
 
 export default function Legend({
+    layer,
     numericalThresholds, 
     colorRange, 
     defaultColorRange,
+    scaleColorList,
     unit,
     onChangeColor,
     onChangeSegment,
@@ -49,29 +53,34 @@ export default function Legend({
     const wholeSegmentArray = numWholeSegments > 0 ? Array(numWholeSegments).fill(0) : Array(1).fill(0)
     
     const scaleValuesDisplay = (() => {
+        
         const finalValue = numericalThresholds[numWholeSegments]
         const finalUnit = (finalValue > 1000000 ? "M" : "K")
 
         const fixedScaleValues: string[] = numericalThresholds.map((item: number): string => {
-            if (item < 100000 || (item < 1000000 && finalUnit == "K")) {
-                return (item / 1000) + "K"
-            } else if (item > 100000 || (item < 1000000 && finalUnit == "M")) {
-                return (item / 1000000) + "M"
+            if (layer === "fisheries") {
+                if (item < 100000 || (item < 1000000 && finalUnit == "K")) {
+                    return (item / 1000) + "K"
+                } else if (item > 100000 || (item < 1000000 && finalUnit == "M")) {
+                    return (item / 1000000) + "M"
+                }
+                return ""
+            } else if (layer === "extents") {
+                return `${item}%`
             }
-            return ""
         })
 
         return fixedScaleValues;
+        
     }) ();
 
     // returns a string specifying where the grid templates are at.
     const labelPositionCalc: string = (() => {
-        let str = `${100 / (numWholeSegments + 1) / 2}fr `
+        let str = `${100 / (numWholeSegments + 1)}fr `
         for (let i = 0; i < numWholeSegments; i++) {
             const computed = `${100 / (numWholeSegments + 1)}fr `
             str += computed;
         }
-        str += `${100 / (numWholeSegments + 1) / 2}fr `
         console.log(str)
         return str;
     }) ();
@@ -91,7 +100,7 @@ export default function Legend({
 
                     {/* standard segments. width = 100% / (numsegments + 1) */}
                     {wholeSegmentArray.map((_, index) => (
-                        <div key={index} className="indivScaleBar" style={{ backgroundColor: interpolate(colorRange[0], colorRange[1], (index + 1) / (numWholeSegments + 1)), width: `${100 / (numWholeSegments + 1)}%` }} />
+                        <div key={index} className="indivScaleBar" style={{ backgroundColor: scaleColorList[index+1], width: `${100 / (numWholeSegments + 1)}%` }} />
                     ))}
 
                     {/* upper outlier. Make the width half of a standard segment. */}

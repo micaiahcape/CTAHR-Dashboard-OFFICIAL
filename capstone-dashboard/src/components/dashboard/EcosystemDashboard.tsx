@@ -253,7 +253,7 @@ function LineChart({ entries, formatValue, color = "#d94801" }: { entries: [numb
 export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: DashboardProps) {
   const [geoData, setGeoData] = useState<GeoJSON | null>(null);
   const [rowData, setRowData] = useState<DataRow[]>([]);
-  const [dataset, setDataset] = useState<"noncomm" | "comm">("noncomm");
+  const [dataset, setDataset] = useState("noncomm");
   const [showRawData, setShowRawData] = useState(false);
   const [selectedArea, setSelectedArea] = useState("");
   const [activeTab, setActiveTab] = useState<"filter" | "viz">("filter");
@@ -271,8 +271,8 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   // Extents data + filters
   const [extentsData, setExtentsData] = useState<ExtentsRow[]>([]);
   const [extentsGeoData, setExtentsGeoData] = useState<GeoJSON | null>(null);
-  const [selectedExtentsYearStart, setSelectedExtentsYearStart] = useState<number | null>(null);
-  const [selectedExtentsYearEnd, setSelectedExtentsYearEnd] = useState<number | null>(null);
+  const [selectedExtentsYearStart, setSelectedExtentsYearStart] = useState<number | null>(2013);
+  const [selectedExtentsYearEnd, setSelectedExtentsYearEnd] = useState<number | null>(2019);
   const [selectedExtentsEcosystem, setSelectedExtentsEcosystem] = useState("");
   const [selectedExtentsMoku, setSelectedExtentsMoku] = useState("");
 
@@ -334,35 +334,35 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
     }
 
     loadData();
-  }, [dataset, geoJsonPath]);
+  }, [dataset, layer, geoJsonPath]);
 
   // Load extents data once on mount
   useEffect(() => {
     async function loadExtents() {
-      const res = await fetch("/mokuextentsdata/mokus_extents.geojson");
+      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+      const res = await fetch("/mokuextentsdata/20261007_terrestrial_extents_byMoku.geojson");
       const geo = await res.json();
 
-      const rows: ExtentsRow[] = geo.features
-        .map((feat: GeoFeature) => {
-          const p = feat.properties;
-          const moku_olelo = String(p.moku_olelo ?? "");
-          const island_olelo = String(p.island_olelo ?? "");
-          return {
-            year: Number(p.year),
-            moku_olelo,
-            island_olelo,
-            moku_key: `${moku_olelo} (${island_olelo})`,
-            realm: String(p.realm ?? ""),
-            ecosystem_type: String(p.ecosystem_type ?? ""),
-            area_km2: Number(p.area_km2) || 0,
-          };
-        })
-        .filter((r: ExtentsRow) => r.area_km2 > 0);
+      const rows: ExtentsRow[] = []
 
+      for (const feat of geo.features) {
+        let f = feat.properties
+        for (let i = 0; i < feat.properties.year.length; i++) {
+          rows.push ({
+            year: Number(f.year[i]),
+            moku_olelo: String(f.moku_olelo ?? ""),
+            island_olelo: String(f.island_olelo ?? ""),
+            moku_key: `${f.moku_olelo}_${f.island_olelo}`, // combination of moku and island creates a primary key
+            realm: f.realm,
+            ecosystem_type: f.ecosystem_type[i],
+            area_km2: Number(f.area_km2[i]) || 0,
+          })
+        }
+      }
+      console.log(rows);
       setExtentsData(rows);
       setExtentsGeoData(geo);
     }
-
     loadExtents();
   }, []);
 
@@ -375,11 +375,6 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   const years = [...new Set(rowData.map((d) => d.year))].sort((a, b) => a - b);
   const speciesGroups = [...new Set(rowData.map((d) => d.species_group))].sort();
   const ecosystemTypes = [...new Set(rowData.map((d) => d.ecosystem_type))].sort();
-
-  console.log("======= PROPS BEFORE IT GETS SENT TO CHILD =======")
-  console.log(speciesGroups.toString())
-  console.log(years.toString())
-  console.log(ecosystemTypes.toString())
 
   // because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for filter dropdowns.
   if (speciesGroups.length > 1) {
@@ -397,6 +392,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
     setSelectedSpecies(species);
     setSelectedEcosystem(ecosystem);
   }
+
 
   const filteredFisheryRows = rowData.filter((row) => {
     return (
@@ -437,126 +433,90 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
   // ----------------------------------
   // Extents derived values
   // ----------------------------------
+
   const extentsYears = [...new Set(extentsData.map((d) => d.year))].sort((a, b) => a - b);
   const extentsEcosystems = [...new Set(extentsData.map((d) => d.ecosystem_type))].sort();
   const extentsMokus = [...new Set(extentsData.map((d) => d.moku_key))].sort();
 
   const filteredExtentsRows = extentsData.filter((row) => {
     return (
-      (selectedExtentsYearStart === null || row.year >= selectedExtentsYearStart) &&
-      (selectedExtentsYearEnd === null || row.year <= selectedExtentsYearEnd) &&
-      (selectedExtentsEcosystem === "" || row.ecosystem_type === selectedExtentsEcosystem) &&
-      (selectedExtentsMoku === "" || row.moku_key === selectedExtentsMoku)
+      ((selectedExtentsYearStart === null || row.year === selectedExtentsYearStart) ||
+      (selectedExtentsYearEnd === null || row.year === selectedExtentsYearEnd)) &&
+      (selectedExtentsEcosystem === "" || row.ecosystem_type === selectedExtentsEcosystem)
     );
   });
 
-  // Realm-ecosystem mapping — ecosystems that belong to each realm
-  const MARINE_ECOSYSTEMS = new Set([
-    "Coral Dominated Hard Bottom", "Open Ocean", "Other Hard Bottom",
-    "Pavement", "Rock/Boulder", "Soft Bottom",
-  ]);
-  const TERRESTRIAL_ECOSYSTEMS = new Set([
-    "Barren", "Beaches/Dunes", "Cropland", "Developed", "Estuarine Wetlands",
-    "Freshwater Wetlands", "Grass/Shrub", "Pasture", "Tree Cover",
-  ]);
+  console.log(extentsData)
+  const changesByMoku: any = {};
+  if (selectedExtentsYearStart === selectedExtentsYearEnd) {
+    // view for just that year
+  } else {
+    filteredExtentsRows.forEach(i => {
+      const o = changesByMoku[i.moku_key] ? changesByMoku[i.moku_key] : {}
+      o[i.year] = i.area_km2
+      changesByMoku[i.moku_key] = o;
+    })
+  }
 
-  // Sum area_km2 per moku_key+realm so each polygon gets realm-appropriate values
-  const extentsTotalsByMokuRealm: Record<string, number> = {};
-  // Also sum per moku_key (for viz panel totals)
-  const extentsTotalsByMoku: Record<string, number> = {};
-  filteredExtentsRows.forEach((row) => {
-    const realmForEco = MARINE_ECOSYSTEMS.has(row.ecosystem_type)
-      ? "Marine"
-      : TERRESTRIAL_ECOSYSTEMS.has(row.ecosystem_type)
-      ? "Terrestrial"
-      : row.realm;
-    const realmKey = `${row.moku_key}||${realmForEco}`;
-    extentsTotalsByMokuRealm[realmKey] = (extentsTotalsByMokuRealm[realmKey] || 0) + row.area_km2;
-    extentsTotalsByMoku[row.moku_key] = (extentsTotalsByMoku[row.moku_key] || 0) + row.area_km2;
-  });
+  Object.keys(changesByMoku).forEach((k) => {
+    const first = changesByMoku[k][String(selectedExtentsYearStart)] 
+    const last = changesByMoku[k][String(selectedExtentsYearEnd)]
+    const abs_change = last - first
+    changesByMoku[k].absolute_change = abs_change
+    changesByMoku[k].relative_change = first != 0 ? (abs_change / first) * 100 : 0
+  })
 
-  // Only show moku+realm combos that have data after filtering
-  const activeMokuRealms = new Set(Object.keys(extentsTotalsByMokuRealm));
+  console.log(changesByMoku)
 
-  // Deduplicate to one geometry per moku_key+realm, restricted to active combos
-  const extentsAggregated: GeoJSON | null = extentsGeoData
-    ? (() => {
-        const seenMokuRealm = new Set<string>();
-        const deduped = extentsGeoData.features.filter((feat: GeoFeature) => {
-          const moku = String(feat.properties.moku_olelo ?? "");
-          const island = String(feat.properties.island_olelo ?? "");
-          const moku_key = `${moku} (${island})`;
-          const realm = String(feat.properties.realm ?? "");
-          const key = `${moku_key}||${realm}`;
-          if (!activeMokuRealms.has(key)) return false;
-          if (selectedExtentsMoku !== "" && moku_key !== selectedExtentsMoku) return false;
-          if (seenMokuRealm.has(key)) return false;
-          seenMokuRealm.add(key);
-          return true;
-        });
-        return {
-          ...extentsGeoData,
-          features: deduped.map((feat: GeoFeature) => {
-            const moku = String(feat.properties.moku_olelo ?? "");
-            const island = String(feat.properties.island_olelo ?? "");
-            const moku_key = `${moku} (${island})`;
-            const realm = String(feat.properties.realm ?? "");
-            const key = `${moku_key}||${realm}`;
-            return {
-              ...feat,
-              properties: {
-                ...feat.properties,
-                moku_key,  // attach so Map can use it as click key
-                total_area_km2: extentsTotalsByMokuRealm[key] || 0,
-              },
-            };
-          }),
-        };
-      })()
-    : null;
+  console.log(extentsGeoData)
+
+  // aggregate into GeoJSON
+
+  const aggregatedExtentsGeoJSON = {...extentsGeoData,
+    features: extentsGeoData?.features.map(feat => {
+      return ({
+        ...feat,
+        properties: {
+          moku: feat.properties.moku_olelo,
+          island: feat.properties.island_olelo,
+          relative_change: changesByMoku[`${feat.properties.moku_olelo}_${feat.properties.island_olelo}`].relative_change,
+          absolute_change: changesByMoku[`${feat.properties.moku_olelo}_${feat.properties.island_olelo}`].absolute_change,
+          year_range: `${selectedExtentsYearStart}-${selectedExtentsYearEnd}`,
+          ecosystem_type: selectedExtentsEcosystem,
+        }
+      })
+    })
+  }
 
   // Active map data — switch based on layer
   const activeGeoData =
-    layer === "extents" && extentsAggregated ? extentsAggregated : aggregatedGeoJSON;
+    layer === "extents" && aggregatedExtentsGeoJSON ? aggregatedExtentsGeoJSON : aggregatedGeoJSON;
 
-  // Stable color scale thresholds — computed from ALL data, not filtered,
-  // so polygon colors don't shift when filters change.
-  /* As of 9/24/26, not in use. The dynamic color scale thresholds (computeColorThresholds) are used below. */
-  const stableColorThresholds = (() => {
-    if (layer === "extents") {
-      // Build full moku+realm totals from ALL extents rows (no filter)
-      const allTotals: Record<string, number> = {};
-      extentsData.forEach((row) => {
-        const realmForEco =
-          ["Coral Dominated Hard Bottom", "Open Ocean", "Other Hard Bottom", "Pavement", "Rock/Boulder", "Soft Bottom"]
-            .includes(row.ecosystem_type)
-            ? "Marine"
-            : "Terrestrial";
-        const key = `${row.moku_key}||${realmForEco}`;
-        allTotals[key] = (allTotals[key] || 0) + row.area_km2;
-      });
-      const sorted = Object.values(allTotals).sort((a, b) => a - b);
-      return [sorted[Math.floor(sorted.length*0.1)], sorted[Math.floor(sorted.length*0.9)]];
-
-    } else {
-      // Build full moku/county totals from ALL fisheries rows (no filter)
-      const allTotals: Record<string, number> = {};
-      rowData.forEach((row) => {
-        allTotals[row.area_id] = (allTotals[row.area_id] || 0) + row.exchange_value;
-      });
-      const sorted = Object.values(allTotals).sort((a, b) => a - b);
-      return [sorted[Math.floor(sorted.length*0.1)], sorted[Math.floor(sorted.length*0.9)]];
-    }
-  })();
+  //const activeGeoData = aggregatedGeoJSON
 
   const computedColorThresholds = (() => {
-    const sorted = Object.values(filteredTotalsById).sort((a, b) => a - b);
-    const percent5 = Math.round(sorted[Math.floor(sorted.length * 0.1)])
-    const percent95 = Math.round(sorted[Math.floor(sorted.length * 0.9)])
+    let sorted: number[]
+    if (layer === "fisheries") {
+      sorted = Object.values(filteredTotalsById).sort((a, b) => a - b);
+      const percent1 = Math.round(sorted[Math.floor(sorted.length * 0.1)])
+      const percent9 = Math.round(sorted[Math.floor(sorted.length * 0.9)])
+      return [percent1, percent9]
 
-    const res: [number, number] = [percent5, percent95]
-
-    return res;
+    } else if (layer === "extents") {
+      sorted = Object.values(changesByMoku).map((e: any) => e.relative_change).sort((a, b) => a - b);
+      // restrict to 2 decimal places in terms of %.
+      const percent1 = Math.round(sorted[Math.floor(sorted.length * 0.1)] * 100) / 100
+      const percent9 = Math.round(sorted[Math.floor(sorted.length * 0.9)] * 100) / 100
+      if (percent1 < 0 && percent9 > 0) {
+        if (Math.abs(percent1) > Math.abs(percent9)) {
+          return [percent1, 0-percent1]
+        } else {
+          return [0-percent9, percent9]
+        }
+      }
+      return [percent1, percent9]
+    }
+    return [0, 0]
   }) ();
 
   // ----------------------------------
@@ -789,8 +749,6 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
     ? Math.max(...extentsChangeEntries.map((c) => Math.abs(c.delta)), 1)
     : 1;
 
-
-
   return (
     <div className="dashboard-container">
 
@@ -798,6 +756,8 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
       <FilterSidebar
         layer={layer}
         setLayer={setLayer}
+        datatype={dataset}
+        setDatatype={setDataset}
         onLayerChange={() => setSelectedArea("")}
       />
 
@@ -812,7 +772,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
           
         </div>
 
-        <Map
+        {activeGeoData && <Map
           mapType={dataset}
           layerType={layer}
           geoData={activeGeoData}
@@ -823,7 +783,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
           selectedEcosystem={layer === "extents" ? selectedExtentsEcosystem : selectedEcosystem}
           onCountyClick={handleAreaClick}
           outliers={computedColorThresholds}
-        />
+        />}
 
         <div style={{ position: "absolute", left: "30%", top: "50%"}}>
          
@@ -922,7 +882,7 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
                 <div className="rp-section">
                   <div className="filter-label">Ecosystem Type</div>
                   <div className="filter-sublabel">Marine</div>
-                  <div className="button-group" style={{ marginBottom: 8 }}>
+                  {/*<div className="button-group" style={{ marginBottom: 8 }}>
                     {[...MARINE_ECOSYSTEMS].sort().map((e) => (
                       <button
                         key={e}
@@ -932,10 +892,10 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
                         {e}
                       </button>
                     ))}
-                  </div>
+                  </div> */}
                   <div className="filter-sublabel mt">Terrestrial</div>
                   <div className="button-group">
-                    {[...TERRESTRIAL_ECOSYSTEMS].sort().map((e) => (
+                    {[...extentsEcosystems].sort().map((e) => (
                       <button
                         key={e}
                         className={`filter-btn ${selectedExtentsEcosystem === e ? "active" : ""}`}
@@ -1012,13 +972,11 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
             {layer === "fisheries" && 
               <FisheriesFilterMenu 
                 key={dataset} // force a rerender when dataset changes.
-                dataset={dataset}
                 speciesGroups={speciesGroups}
                 ecosystemTypes={ecosystemTypes}
                 yearRange={[years[0], years[years.length-1]]}
                 counties={counties}
                 onChangeFilter={handleFilterChange}
-                onChangeDataset={(d) => setDataset(d)}
               />
             }
 

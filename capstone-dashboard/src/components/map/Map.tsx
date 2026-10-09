@@ -18,7 +18,7 @@ import "leaflet/dist/leaflet.css";
 const Legend = dynamic(() => import("../map/Legend"), { ssr: false });
 
 type LayerType = "fisheries" | "extents";
-type FeatureValueField = "total_area_km2" | "total_exchange_value";
+type FeatureValueField = "relative_change" | "absolute_change" | "total_exchange_value";
 
 interface DashboardFeatureProperties {
   [key: string]: unknown;
@@ -55,6 +55,7 @@ interface MapProps {
   colorRange: [string, string];
   outliers: [number, number]; // an array containing two numbers: the 5th and 95th percentiles. Any number that falls on either side of that extreme will default to the color on that end. Otherwise, the color will be calculated by linear interpolation.
   numericalThresholds: any;
+  colorList: any;
 }
 
 // accepts two colors in hex format, and outputs an interpolated color
@@ -83,7 +84,7 @@ function GeoJSONLayer({
   selectedYearEnd,
   selectedSpecies,
   selectedEcosystem,
-  colorRange,
+  colorList,
   numericalThresholds,
   onCountyClick,
 }: Omit<MapProps, "layerType" | "outliers"> & { layerType: LayerType }) {
@@ -95,7 +96,7 @@ function GeoJSONLayer({
     while (value > numericalThresholds[index] && index < numericalThresholds.length) {
       index++;
     }
-    return interpolate(colorRange[0], colorRange[1], index / numericalThresholds.length)
+    return colorList[index];
   }
 
   const formatCurrency = (value: number) =>
@@ -111,8 +112,10 @@ function GeoJSONLayer({
       layerRef.current = null;
     }
 
-    const field: FeatureValueField = layerType === "extents" ? "total_area_km2" : "total_exchange_value";
+    const field: FeatureValueField = layerType === "extents" ? "relative_change" : "total_exchange_value";
     const isExtents = layerType === "extents";
+
+    console.log(geoData)
 
     const geojsonLayer = L.geoJSON(geoData as GeoJsonObject, {
       style: (feature) => {
@@ -134,17 +137,30 @@ function GeoJSONLayer({
         const value = Number(feature?.properties?.[field]) || 0;
 
         const label = isExtents
-          ? `${feature.properties.realm} — ${feature.properties.moku_olelo}`
+          ? `${feature.properties.moku} — ${feature.properties.island}`
           : mapType === "comm"
           ? `${feature.properties.area_id}`
           : `County: ${feature.properties.county}`;
+        
+        let formattedValue: String = "";
+        if (isExtents) {
+          if (value > 0) {
+            formattedValue = `▲ ${value.toFixed(2)}%`
+          } else if (value < 0) {
+            formattedValue = `▼ ${(0-value).toFixed(2)}%`
+          } else if (value == 0) {
+            formattedValue = `No Change`
+          }
+        } else {
+          formattedValue = formatCurrency(value)
+        }
 
         const valueLine = isExtents
-          ? `Area: ${value.toFixed(2)} km²`
-          : `Exchange Value: ${formatCurrency(value)}`;
+          ? `Relative change: <b style="background-color: ${getColor(value)}; padding: 1% 2%">${formattedValue}</b>`
+          : `Exchange Value: <b>${formattedValue}</b>`;
 
         const tooltipContent = `
-          <div style="font-size:13px">
+          <div style="font-size: 13px">
             <strong>${label}</strong><br/>
             ${valueLine}<br/>
             ${isExtents
@@ -202,7 +218,7 @@ function GeoJSONLayer({
 
 export default function Map({
   mapType,
-  layerType = "fisheries",
+  layerType,
   geoData,
   selectedCounty,
   selectedYearStart,
@@ -214,18 +230,16 @@ export default function Map({
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
-  const [numWholeSegments, setNumWholeSegments] = useState<number>(2)
-  const [colorRange, setColorRange] = useState<[string, string]>(["#FFFFFF", "#ff2f00"])
+  const [numWholeSegments, setNumWholeSegments] = useState<number>(4)
+  const [colorRange, setColorRange] = useState<[string, string]>(layerType == "fisheries" ? ["#FFFFFF", "#ff3300"] : ["#0362fc", "#fc0345"])
 
-  /* const handleSegmentChange = (seg: number) => {
-    setNumWholeSegments(seg)
-  }
-
-  const handleClrChange = (clr: string, id: number) => {
-    const newArray: [string, string] = [...colorRange]
-    newArray[id] = clr
-    setColorRange(newArray)
-  } */
+  useEffect(() => {
+    if (layerType === "extents") {
+      setColorRange(["#0362fc", "#fc0345"])
+    } else if (layerType === "fisheries") {
+      setColorRange(["#FFFFFF", "#ff3300"])
+    }
+  }, [layerType])
 
   // only updates when user presses "submit."
   const handleColorChange = (clr1: string, clr2: string) => {
@@ -239,35 +253,70 @@ export default function Map({
   }
 
   const recalculatedThresholds = (() => {
+    console.log(outliers[0], outliers[1])
     const increment = (outliers[1] - outliers[0]) / numWholeSegments
-    const increment_length = Math.trunc(increment).toString().length;
-    const digits_to_round = increment_length - 2
-
-    const fixed_increment = Math.round(increment / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
-    let fixed_low_outlier = Math.round(outliers[0] / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
-
-    if (fixed_low_outlier <= 0) {
-      fixed_low_outlier = Math.pow(10, digits_to_round)
-    }
     const recalc = [];
 
-    for (let i = 0; i < numWholeSegments + 1; i++) {
-      recalc.push(fixed_low_outlier + i * (fixed_increment))
-    }
-    return recalc;
+    if (layerType === "fisheries") {
+      const increment_length = Math.trunc(increment).toString().length;
+      const digits_to_round = increment_length - 2
 
+      const fixed_increment = Math.round(increment / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
+      let fixed_low_outlier = Math.round(outliers[0] / Math.pow(10, digits_to_round)) * Math.pow(10, digits_to_round)
+
+      if (fixed_low_outlier <= 0) {
+        fixed_low_outlier = Math.pow(10, digits_to_round)
+      }
+
+      for (let i = 0; i < numWholeSegments + 1; i++) {
+        recalc.push(fixed_low_outlier + i * (fixed_increment))
+      }
+
+      console.log(recalc);
+      return recalc;
+
+    } else {
+
+      for (let i = 0; i < numWholeSegments + 1; i++) {
+        recalc.push(Math.round((outliers[0] + i * (increment)) * 10) / 10)
+      }
+
+      console.log(recalc);
+      return recalc;
+    }
   }) ();
-  
+
+  const calculatedColorList = (() => {
+    const colors = []
+    if (layerType == "fisheries") {
+      for (let i = 0; i < recalculatedThresholds.length + 1; i++) {
+        colors.push(interpolate(colorRange[0], colorRange[1], i / recalculatedThresholds.length))
+      }
+    } else {
+      const len = recalculatedThresholds.length
+      for (let i = 0; i < recalculatedThresholds.length + 1; i++) {
+        if (i >= len / 2){
+          colors.push(interpolate("#b5bdc9", colorRange[1], (i - Math.floor(len / 2)) / Math.ceil(len / 2)))
+        } else {
+          colors.push(interpolate("#b5bdc9", colorRange[0], (Math.ceil(len / 2) - i) / Math.ceil(len / 2)))
+        }
+      }
+    }
+    console.log(colors)
+    return colors;
+  }) ()
+   
   return (
     <div style={{ width: "100%", height: "100%" }}>
-
       <Legend 
         numericalThresholds={recalculatedThresholds}
         colorRange={colorRange}
         defaultColorRange={colorRange}
+        scaleColorList={calculatedColorList}
         unit="Total Exchange Value (USD)"
         onChangeColor={handleColorChange}
         onChangeSegment={handleSegmentChange}
+        layer={layerType}
       />
       
       <MapContainer
@@ -291,7 +340,7 @@ export default function Map({
           selectedSpecies={selectedSpecies}
           selectedEcosystem={selectedEcosystem}
           onCountyClick={onCountyClick}
-          colorRange={colorRange}
+          colorList={calculatedColorList}
           numericalThresholds={recalculatedThresholds}
         />
       </MapContainer>
