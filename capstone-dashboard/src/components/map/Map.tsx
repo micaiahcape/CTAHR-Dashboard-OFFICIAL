@@ -155,14 +155,18 @@ function GeoJSONLayer({
           formattedValue = formatCurrency(value)
         }
 
-        const valueLine = isExtents
-          ? `Relative change: <b style="background-color: ${getColor(value)}; padding: 1% 2%">${formattedValue}</b>`
-          : `Exchange Value: <b>${formattedValue}</b>`;
-
         const tooltipContent = `
           <div style="font-size: 13px">
             <strong>${label}</strong><br/>
-            ${valueLine}<br/>
+            ${isExtents ? (
+              `${feature.properties.year1} area: ${feature.properties.year1Value} km<sup>2</sup> <br/>
+              <div style="display: flex">
+                <p style="margin: auto 6px auto 0;">${feature.properties.year2} area: ${feature.properties.year2Value} km<sup>2</sup></p>
+                <b style="background-color: ${getColor(value)}; padding: 1px 2px; font-size: 15px">${formattedValue}</b>
+              </div>`
+            ) : (
+              `Exchange Value: <b>${formattedValue}</b>`
+            )}<br/>
             ${isExtents
               ? `Ecosystem: ${selectedEcosystem || "All"}`
               : `Year: ${selectedYearStart || selectedYearEnd

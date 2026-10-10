@@ -464,6 +464,8 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
     const abs_change = last - first
     changesByMoku[k].absolute_change = abs_change
     changesByMoku[k].relative_change = first != 0 ? (abs_change / first) * 100 : 0
+    changesByMoku[k].firstYear = first;
+    changesByMoku[k].lastYear = last;
   })
 
   console.log(changesByMoku)
@@ -474,14 +476,18 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
 
   const aggregatedExtentsGeoJSON = {...extentsGeoData,
     features: extentsGeoData?.features.map(feat => {
+      const specific_moku = changesByMoku[`${feat.properties.moku_olelo}_${feat.properties.island_olelo}`]
       return ({
         ...feat,
         properties: {
           moku: feat.properties.moku_olelo,
           island: feat.properties.island_olelo,
-          relative_change: changesByMoku[`${feat.properties.moku_olelo}_${feat.properties.island_olelo}`].relative_change,
-          absolute_change: changesByMoku[`${feat.properties.moku_olelo}_${feat.properties.island_olelo}`].absolute_change,
-          year_range: `${selectedExtentsYearStart}-${selectedExtentsYearEnd}`,
+          relative_change: specific_moku.relative_change,
+          absolute_change: specific_moku.absolute_change,
+          year1Value: specific_moku.firstYear,
+          year2Value: specific_moku.lastYear,
+          year1: selectedExtentsYearStart,
+          year2: selectedExtentsYearEnd,
           ecosystem_type: selectedExtentsEcosystem,
         }
       })
