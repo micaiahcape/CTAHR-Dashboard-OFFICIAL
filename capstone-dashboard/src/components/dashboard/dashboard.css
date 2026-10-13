@@ -84,6 +84,13 @@
   background-color:#d94801;
 }
 
+/* ================= Dashboard (Central + right panel) ================= */
+
+.dashboard-main {
+  display: flex;
+  flex: 1
+}
+
 /* ================= Central panel ================= */
 
 .central-panel {

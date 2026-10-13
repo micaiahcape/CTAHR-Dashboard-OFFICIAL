@@ -4,12 +4,15 @@
  */
 'use client';
 import EcosystemDashboard from "@/components/dashboard/EcosystemDashboard";
+import DashboardFINAL from "@/components/dashboard/DashboardFINAL";
 
 export default function Home() {
   return (
-    <EcosystemDashboard
+    <>
+    <DashboardFINAL />
+    {/* <EcosystemDashboard
       geoJsonPath="/fisheriesdata/marinecounties.geojson"
-      datasetLabel="Fisheries"
-    />
+      datasetLabel="Fisheries"/> */}
+    </>
   );
 }

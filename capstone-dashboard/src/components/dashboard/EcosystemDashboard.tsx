@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "./dashboard.css";
 import FilterSidebar from "./FilterSidebar";
-import FisheriesFilterMenu from "./FisheriesFilterMenu";
+import FisheriesFilterMenu from "../fisheries/FisheriesFilterMenu";
 import { StringDecoder } from "node:string_decoder";
 
 const Map = dynamic(() => import("../map/Map"), { ssr: false });
@@ -790,10 +790,6 @@ export default function EcosystemDashboard({ geoJsonPath, datasetLabel }: Dashbo
           onCountyClick={handleAreaClick}
           outliers={computedColorThresholds}
         />}
-
-        <div style={{ position: "absolute", left: "30%", top: "50%"}}>
-         
-        </div>
       </div>
       
       {/* Right panel */}

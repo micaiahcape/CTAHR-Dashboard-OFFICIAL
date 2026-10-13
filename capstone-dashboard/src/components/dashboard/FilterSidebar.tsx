@@ -5,6 +5,7 @@
  */
 "use client";
 
+import "./dashboard.css";
 import Image from "next/image";
 
 interface FilterSidebarProps {
