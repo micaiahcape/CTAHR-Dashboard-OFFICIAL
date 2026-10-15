@@ -122,9 +122,7 @@ function GeoJSONLayer({
         const value = Number(feature?.properties?.[field]) || 0;
         const featureKey = isExtents
           ? feature?.properties?.moku_key
-          : mapType === "comm"
-          ? feature?.properties?.area_id
-          : feature?.properties?.county;
+          : feature?.properties?.area_name
         const isSelected = selectedCounty !== "" && featureKey === selectedCounty;
         return {
           fillColor: getColor(value),
@@ -139,7 +137,7 @@ function GeoJSONLayer({
         const label = isExtents
           ? `${feature.properties.moku} — ${feature.properties.island}`
           : mapType === "comm"
-          ? `${feature.properties.area_id}`
+          ? `${feature.properties.area_name}`
           : `County: ${feature.properties.county}`;
         
         let formattedValue: String = "";
@@ -185,9 +183,7 @@ function GeoJSONLayer({
           click: () => {
             const key = isExtents
               ? feature.properties.moku_key
-              : mapType === "comm"
-              ? feature.properties.area_id
-              : feature.properties.county;
+              : feature.properties.area_name
             onCountyClick?.(String(key ?? ""));
           },
           mouseover: (e: L.LeafletMouseEvent) => {
@@ -196,9 +192,7 @@ function GeoJSONLayer({
           mouseout: (e: L.LeafletMouseEvent) => {
             const featureKey = isExtents
               ? feature.properties.moku_key
-              : mapType === "comm"
-              ? feature.properties.area_id
-              : feature.properties.county;
+              : feature.properties.area_name
             const isSel = selectedCounty !== "" && featureKey === selectedCounty;
             e.target.setStyle({ fillOpacity: isSel ? 0.65 : 0.9 });
           },

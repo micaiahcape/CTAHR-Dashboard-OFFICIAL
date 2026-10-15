@@ -1,20 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import "../dashboard/dashboard.css";
 import FilterSidebar from "../dashboard/FilterSidebar";
 import FisheriesFilterMenu from "./FisheriesFilterMenu";
+import { Allison } from "next/font/google";
 
 const Map = dynamic(() => import("../map/Map"), { ssr: false });
 
 interface DataRow {
   	year: number;
-  	county: string;
-  	area_id: string;
+	area_name: string;
   	species_group: string;
   	ecosystem_type: string;
   	exchange_value: number;
+	county: string;
 }
 
 interface GeoFeature {
@@ -29,7 +30,7 @@ interface GeoJSON {
 }
 
 
-function normalizeCounty(raw: string): string {
+function normalizeCounty(raw: any): string {
   	const map: Record<string, string> = {
 		"Hawaiʻi": "Hawaii",
 		"Kauaʻi": "Kauai",
@@ -41,40 +42,35 @@ function normalizeCounty(raw: string): string {
   	return map[raw] ?? raw;
 }
 
+// format currency
+const formatCurrency = (value: number) =>
+	new Intl.NumberFormat("en-US", {
+	style: "currency",
+	currency: "USD",
+	maximumFractionDigits: 0,
+	}).format(value);
+
 /*******************
  * Returns rows like this:
  * 
- * [{year: <year>, county: <county>, area_id: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, 
- * {year: <year>, county: <county>, area_id: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, {...}, ...]
+ * [{year: <year>, area_name: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, 
+ * {year: <year>, area_name: <area_id>, species_group: <species_group>, ecosystem_type: <ecosystem_type>, exchange_value: <exchange_value>}, {...}, ...]
  * 
  ************************/
 
-function parseNoncommGeoJSON(geojson: GeoJSON): DataRow[] {
-  	return geojson.features.map((feat: GeoFeature) => {
+function parseFisheriesGeoJSON(geojson: GeoJSON, datatype: string): DataRow[] {
+	const rows: DataRow[] = [];
+	for (const feat of geojson.features) {
 		const p = feat.properties;
-		const county = normalizeCounty(String(p.county ?? ""));
-		return {
-			year: Number(p.year),
-			county,
-			area_id: county,
-			species_group: String(p.species_group ?? ""),
-			ecosystem_type: String(p.ecosystem_type ?? ""),
-			exchange_value: Number(p.exchange_value) || 0,
-      	} as DataRow;
-    }).filter((r: DataRow) => (r.exchange_value > 0 && r.species_group != "All Species" && r.ecosystem_type != "All Ecosystems"));
-}
+		const name: string = datatype == "comm" ? String(p.area_id) : String(p.island)
+		const county = normalizeCounty(p.county_olelo)
 
-function parseCommGeoJSON(geojson: GeoJSON): DataRow[] {
-  	const rows: DataRow[] = [];
-  	for (const feat of geojson.features) {
-		const p = feat.properties;
-		const county = normalizeCounty(String(p.county_olelo ?? ""));
 		const toArr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [v]);
 		const years = toArr(p.year).map(Number);
 		const species = toArr(p.species_group).map(String);
 		const ecosystems = toArr(p.ecosystem_type).map(String);
 		const values = toArr(p.exchange_value).map(Number);
-
+	
 		for (let i = 0; i < years.length; i++) {
 			const val = Number(values[i]) || 0;
 			if (val <= 0 || species[i] === "All Species" || ecosystems[i] === "All Ecosystems") continue;
@@ -82,15 +78,16 @@ function parseCommGeoJSON(geojson: GeoJSON): DataRow[] {
 			
 			rows.push({
 				year: Number(years[i]),
-				county,
-				area_id: String(p.area_id ?? ""),
+				area_name: name,
+				county: county,
 				species_group: species[i],
 				ecosystem_type: ecosystems[i],
 				exchange_value: val,
 			});
-    	}
-  	}
-  	return rows;
+		}
+	}
+
+	return rows;
 }
 
 function LineChart({ entries, formatValue, color = "#d94801" }: { entries: [number, number][]; formatValue?: (v: number) => string; color?: string }) {
@@ -230,22 +227,35 @@ interface DashboardProps {
 	dataset: string,
 }
 
+interface FisheryFilterSettings {
+	startYear: number,
+	endYear: number,
+	county?: string,
+	species?: string,
+	ecosystem?: string,
+}
+function AllisonIsTooCuteAndIDontKnowWhatToDo() {
+	return (
+		<p>haha dis does nothing</p>
+	)
+}
+
 export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	const [geoData, setGeoData] = useState<GeoJSON | null>(null);
-	const [commRowData, setCommRowData] = useState<DataRow[]>([]);
-	const [nonCommRowData, setNonCommRowData] = useState<DataRow[]>([]);
-	const [rowData, setRowData] = useState<DataRow[]>([]);
+
+	// holds the raw GeoJSON files.
+	const [commGeoJSON, setCommGeoJSON] = useState<GeoJSON | null>(null);
+	const [nonCommGeoJSON, setNonCommGeoJSON] = useState<GeoJSON | null>(null);
 	const [showRawData, setShowRawData] = useState(false);
 	const [selectedArea, setSelectedArea] = useState("");
 	const [activeTab, setActiveTab] = useState<"filter" | "viz">("filter");
 
 	// Fisheries filters
-	const [selectedYearStart, setSelectedYearStart] = useState<number | null>(null);
-	const [selectedYearEnd, setSelectedYearEnd] = useState<number | null>(null);
-	const [selectedCounty, setSelectedCounty] = useState("");
-	const [selectedSpecies, setSelectedSpecies] = useState("");
-	const [selectedEcosystem, setSelectedEcosystem] = useState("");
+	const nullFilter: FisheryFilterSettings = {startYear: -1, endYear: -1, county: "", species: "", ecosystem: ""}
+	const [commFilter, setCommFilter] = useState<FisheryFilterSettings>(nullFilter)
+	const [nonCommFilter, setNonCommFilter] = useState<FisheryFilterSettings>(nullFilter)
 
+	// for downloading.
 	const [downloadCounty, setDownloadCounty] = useState("");
 	const [downloadMode, setDownloadMode] = useState<"ALL_SEPARATE" | "ONE_COUNTY">("ONE_COUNTY");
 	const [downloadExtentsMokus, setDownloadExtentsMokus] = useState<string[]>([]);
@@ -254,122 +264,132 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	// Load fisheries data
 	useEffect(() => {
 		async function loadData() {
-			const [nonCommGeo, commGeo] = await Promise.all([
-				fetch("/fisheriesdata/noncomm_EV_byIsland_10102026.geojson"),
-				fetch("/fisheriesdata/comm_EV_byCatchmentArea_09182026.geojson"),
+			const [commGeo, nonCommGeo] = await Promise.all([
+				fetch("/fisheriesdata/USED_IN_PROJECT/10_14_2026_comm_EV_byCatchmentArea.geojson"),
+				fetch("/fisheriesdata/USED_IN_PROJECT/10_14_2026_noncomm_EV_byIsland.geojson"),
 			]);
-
-			const [nc, c] = await Promise.all([nonCommGeo.json(), commGeo.json()]);
-
-			console.log(nc)
-			const rows =
-				dataset === "noncomm"
-				? parseNoncommGeoJSON(nc)
-				: parseCommGeoJSON(c);
-
-			// const rows = parseCommGeoJSON(dataGeo);
-
-			console.log(rows)
-
-			setGeoData(dataset === "comm" ? dataGeo : geo);
-			setRowData(rows);
-
-			const speciesValues = [...new Set(rows.map((r) => r.species_group))].sort();
-			const ecoValues = [...new Set(rows.map((r) => r.ecosystem_type))].sort();
-
-			// because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for the pickDefault function below.
-
-			if (speciesValues.length > 1) {
-				speciesValues.unshift("All Species");
-			}
-
-			if (ecoValues.length > 1) {
-				ecoValues.unshift("All Ecosystems");
-			}
-
-			const pickDefault = (values: string[], aggregateLabel: string) =>
-			values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
-
-			setSelectedCounty("");
-			setSelectedYearStart(null);
-			setSelectedYearEnd(null);
-			setSelectedSpecies(pickDefault(speciesValues, "All Species"));
-			setSelectedEcosystem(pickDefault(ecoValues, "All Ecosystems"));
-			setShowRawData(false);
-			setSelectedArea("");
-			setActiveTab("filter");
+			const [c, nc] = await Promise.all([commGeo.json(), nonCommGeo.json()]);		
+			setCommGeoJSON(c)
+			setNonCommGeoJSON(nc)
 		}
 
 		console.log("LOADING DATASET")
 		loadData();
 		console.log("LOADED DATASET")
-	}, [dataset]);
+	}, []);
 
-	if (!geoData) return <div>Loading fisheries...</div>;
+	const commRowData = useMemo(() => {
+		return commGeoJSON ? parseFisheriesGeoJSON(commGeoJSON, "comm") : []
+	}, [commGeoJSON])
 
-	// ----------------------------------
-	// Fisheries derived values
-	// ----------------------------------
-	const counties = [...new Set(rowData.map((d) => d.county))].sort();
-	const years = [...new Set(rowData.map((d) => d.year))].sort((a, b) => a - b);
-	const speciesGroups = [...new Set(rowData.map((d) => d.species_group))].sort();
-	const ecosystemTypes = [...new Set(rowData.map((d) => d.ecosystem_type))].sort();
+	const nonCommRowData = useMemo(() => {
+		return nonCommGeoJSON ? parseFisheriesGeoJSON(nonCommGeoJSON, "comm") : []
+	}, [nonCommGeoJSON])
 
-	// because we excluded "All Species" and "All Ecosystems" when creating rowData, we need to add them back in for filter dropdowns.
-	if (speciesGroups.length > 1) {
-		speciesGroups.unshift("All Species");
-	}
-	
-	if (ecosystemTypes.length > 1) {
-		ecosystemTypes.unshift("All Ecosystems");
-	}
+	// ======== establish the filter ranges and the filters' default values. ========
 
-	const handleFilterChange = (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => {
-		setSelectedYearStart(yearStart);
-		setSelectedYearEnd(yearEnd);
-		setSelectedCounty(county);
-		setSelectedSpecies(species);
-		setSelectedEcosystem(ecosystem);
-	}
+	function establishFilterRange (data: DataRow[]) {
+		if (data.length > 0) return {}
+		
+		const species_list = [...new Set(data.map((r) => r.species_group))].sort()
+		const ecosystem_list = [...new Set(data.map((r) => r.ecosystem_type))].sort()
 
-	const filteredFisheryRows = rowData.filter((row) => {
-		return (
-		(selectedYearStart === null || row.year >= selectedYearStart) &&
-		(selectedYearEnd === null || row.year <= selectedYearEnd) &&
-		(selectedCounty === "" || row.county === selectedCounty) &&
-		// when it's "All Species" or "All Ecosystems", the code "short circuits" and returns all species rows and/or ecosystem rows.
-		(selectedSpecies === "All Species" || row.species_group === selectedSpecies) &&
-		(selectedEcosystem === "All Ecosystems" || row.ecosystem_type === selectedEcosystem)
-		);
-	});
+		if (species_list.length > 1) {
+			species_list.unshift("All Species");
+		}
 
-	const filteredTotalsById: Record<string, number> = {};
-	filteredFisheryRows.forEach((row) => {
-		filteredTotalsById[row.area_id] = (filteredTotalsById[row.area_id] || 0) + row.exchange_value;
-	});
+		if (ecosystem_list.length > 1) {
+			ecosystem_list.unshift("All Ecosystems");
+		}
 
-	const aggregatedGeoJSON = {
-		...geoData,
-		features: geoData.features
-		.map((feature: GeoFeature) => {
-			const key = dataset === "comm"
-			? String(feature.properties.area_id ?? "")
-			: String(feature.properties.county ?? "");
-			return {
-			...feature,
-			properties: {
-				...feature.properties,
-				total_exchange_value: filteredTotalsById[key] || 0,
-			},
-			};
+		return ({
+			species_list: species_list,
+			ecosystem_list: ecosystem_list,
+			counties_list: [...new Set(data.map((d) => d.county))].sort(),
+			years: [...new Set(data.map((d) => d.year))].sort((a, b) => a - b),
 		})
-		.filter((feature: GeoFeature) =>
-			(feature.properties.total_exchange_value as number) > 0
-		),
-	};
+	}
 
-	const activeGeoData = aggregatedGeoJSON
+	const commFilterOptions = useMemo(() => {return establishFilterRange(commRowData)}, [commRowData])
+	const nonCommFilterOptions = useMemo(() => {return establishFilterRange(nonCommRowData)}, [nonCommRowData])
 
+	if (commRowData.length == 0 || nonCommRowData.length == 0) return <div>Loading fisheries...</div>;
+
+	// ======== if data isn't loaded, it short circuits here. ========
+
+	const pickDefault = (values: string[], aggregateLabel: string) =>
+	values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
+
+	// assign the default filter values based on the computed filter options.
+	function getFilterValues(filterList: any) {
+		return ({
+			startYear: filterList.years[0],
+			endYear: filterList.years[filterList.years.length - 1],
+			county: "",
+			species: (pickDefault(filterList.species_list, "All Species")),
+			ecosystem: (pickDefault(filterList.ecosystem_list, "All Ecosystems"))
+		})
+	}
+
+	if (dataset == "comm") {
+		setCommFilter(getFilterValues(commFilterOptions))
+	} else {
+		setNonCommFilter(getFilterValues(nonCommFilterOptions))
+	}
+
+	// ======== actual filtering logic below. ========
+
+	// function that takes from the child component
+	const handleFilterChange = (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => {
+		const temp_new_filter: FisheryFilterSettings = {
+			startYear: yearStart,
+			endYear: yearEnd,
+			county: county,
+			species: species,
+			ecosystem: ecosystem
+		}
+
+		if (dataset === "noncomm") {
+			setNonCommFilter(temp_new_filter)
+		} else {
+			setCommFilter(temp_new_filter)
+		}
+	}
+
+	// filters all rows according to the filter.
+	const filteredRows = (() => {
+		let rows: DataRow[]
+		let filter: FisheryFilterSettings = nullFilter;
+
+		if (dataset === "comm") {
+			rows = commRowData
+			filter = commFilter
+		} else {
+			rows = nonCommRowData
+			filter = nonCommFilter
+		}
+
+		return rows.filter((row) => {
+			return (
+				(filter.startYear === null || row.year >= filter.startYear) &&
+				(filter.endYear === null || row.year <= filter.endYear) &&
+				(filter.county === "" || row.county === filter.county) &&
+				// when it's "All Species" or "All Ecosystems", the code "short circuits" and returns all species rows and/or ecosystem rows.
+				(filter.species === "All Species" || row.species_group === filter.species) &&
+				(filter.ecosystem === "All Ecosystems" || row.ecosystem_type === filter.ecosystem)
+			)
+		})
+	}) ();
+
+	// ======== Transform the filtered data, merge it back to GeoJSON and compute the color thresholds. ========
+
+	// sum up the exchange value by location.
+	const filteredTotalsById: Record<string, number> = {};
+	filteredRows.forEach((row) => {
+		filteredTotalsById[row.area_name] = (filteredTotalsById[row.area_name] || 0) + row.exchange_value;
+	});
+
+	// compute color thresholds (10th and 90th percentile)
 	const computedColorThresholds = (() => {
 		let sorted: number[]
 		sorted = Object.values(filteredTotalsById).sort((a, b) => a - b);
@@ -378,13 +398,30 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 		return [percent1, percent9]
 	}) ();
 
-	const formatCurrency = (value: number) =>
-		new Intl.NumberFormat("en-US", {
-		style: "currency",
-		currency: "USD",
-		maximumFractionDigits: 0,
-		}).format(value);
+	// aggregate back to GeoJSON
+	function aggregateGeoJSON (originalGeoJSON: GeoJSON | null) {
+		return ({
+			...originalGeoJSON,
+			features: originalGeoJSON?.features
+			.map((feature: GeoFeature) => {
+				const key: any = feature.properties.area_name
+				return {
+				...feature,
+				properties: {
+					...feature.properties,
+					total_exchange_value: filteredTotalsById[key] || 0,
+				},
+				};
+			})
+			.filter((feature: GeoFeature) =>
+				(feature.properties.total_exchange_value as number) > 0
+			),
+		});
+	}
 
+	// re-aggregated GeoJSON. This will get passed down directly to the map layer.
+	const activeGeoData = (dataset == "comm" ? aggregateGeoJSON(commGeoJSON) : aggregateGeoJSON(nonCommGeoJSON))
+	
 	const handleAreaClick = (areaId: string) => {
 		const next = selectedArea === areaId ? "" : areaId;
 		setSelectedArea(next);
@@ -396,7 +433,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	// Viz panel data
 	// ----------------------------------
 	const panelRows = selectedArea
-		? filteredFisheryRows.filter((r) => r.area_id === selectedArea)
+		? filteredRows.filter((r) => r.area_name === selectedArea)
 		: [];
 
 	const byYear: Record<number, number> = {};
