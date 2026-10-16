@@ -29,6 +29,25 @@ interface GeoJSON {
   	features: GeoFeature[];
 }
 
+interface DashboardProps {
+	dataset: string,
+}
+
+export interface FisheryFilterSettings {
+	startYear: number,
+	endYear: number,
+	county: string,
+	species: string,
+	ecosystem: string,
+}
+
+export interface FisheryFilterOptions {
+	species_list: string[],
+	ecosystem_list: string[],
+	counties_list: string[],
+	years: number[],
+}
+
 
 function normalizeCounty(raw: any): string {
   	const map: Record<string, string> = {
@@ -223,23 +242,6 @@ function LineChart({ entries, formatValue, color = "#d94801" }: { entries: [numb
 	);
 }
 
-interface DashboardProps {
-	dataset: string,
-}
-
-interface FisheryFilterSettings {
-	startYear: number,
-	endYear: number,
-	county?: string,
-	species?: string,
-	ecosystem?: string,
-}
-function AllisonIsTooCuteAndIDontKnowWhatToDo() {
-	return (
-		<p>haha dis does nothing</p>
-	)
-}
-
 export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	const [geoData, setGeoData] = useState<GeoJSON | null>(null);
 
@@ -283,13 +285,13 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	}, [commGeoJSON])
 
 	const nonCommRowData = useMemo(() => {
-		return nonCommGeoJSON ? parseFisheriesGeoJSON(nonCommGeoJSON, "comm") : []
+		return nonCommGeoJSON ? parseFisheriesGeoJSON(nonCommGeoJSON, "noncomm") : []
 	}, [nonCommGeoJSON])
 
 	// ======== establish the filter ranges and the filters' default values. ========
 
-	function establishFilterRange (data: DataRow[]) {
-		if (data.length > 0) return {}
+	function establishFilterRange(data: DataRow[]) {
+		if (data.length <= 0) return {years: [0, 1]}
 		
 		const species_list = [...new Set(data.map((r) => r.species_group))].sort()
 		const ecosystem_list = [...new Set(data.map((r) => r.ecosystem_type))].sort()
@@ -321,7 +323,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
 
 	// assign the default filter values based on the computed filter options.
-	function getFilterValues(filterList: any) {
+	function getDefaultFilterValues(filterList: any) {
 		return ({
 			startYear: filterList.years[0],
 			endYear: filterList.years[filterList.years.length - 1],
@@ -331,10 +333,14 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 		})
 	}
 
-	if (dataset == "comm") {
-		setCommFilter(getFilterValues(commFilterOptions))
-	} else {
-		setNonCommFilter(getFilterValues(nonCommFilterOptions))
+	// While the dataset is being processed, "startYear" has a placeholder value of -1. Initialize the filters to their default values once the dataset is processed.
+	if (commFilter.startYear < 0) {
+		setCommFilter(getDefaultFilterValues(commFilterOptions))
+	}
+
+	// same thing here
+	if (nonCommFilter.startYear < 0) {
+		setNonCommFilter(getDefaultFilterValues(nonCommFilterOptions))
 	}
 
 	// ======== actual filtering logic below. ========
@@ -422,6 +428,10 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	// re-aggregated GeoJSON. This will get passed down directly to the map layer.
 	const activeGeoData = (dataset == "comm" ? aggregateGeoJSON(commGeoJSON) : aggregateGeoJSON(nonCommGeoJSON))
 	
+	// determine which filter to use.
+	const currentFilter: FisheryFilterSettings = (dataset == "comm" ? commFilter : nonCommFilter)
+	const currentFilterOptions: FisheryFilterOptions = (dataset == "comm" ? commFilterOptions : nonCommFilterOptions)
+	
 	const handleAreaClick = (areaId: string) => {
 		const next = selectedArea === areaId ? "" : areaId;
 		setSelectedArea(next);
@@ -495,7 +505,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 			{/* Map */}
 			<div className="central-panel">
 				<div className="summary-display">
-					<p>{(dataset == "comm") ? "Commercial" : "Non-commercial"} fisheries data, with <span className="summary-highlight">{(selectedSpecies === "All Species") ? "ALL" : selectedSpecies.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(selectedEcosystem === "All Ecosystems") ? "ALL" : selectedEcosystem.toLocaleLowerCase()}</span> ecosystems: {selectedYearStart || years[0]}-{selectedYearEnd || years[years.length-1]}</p>
+					<p>{(dataset == "comm") ? "Commercial" : "Non-commercial"} fisheries data, with <span className="summary-highlight">{(!currentFilter.species || currentFilter.species === "All Species") ? "ALL" : currentFilter.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!currentFilter.ecosystem || currentFilter.ecosystem === "All Ecosystems") ? "ALL" : currentFilter.ecosystem.toLocaleLowerCase()}</span> ecosystems: {currentFilterOptions.years[0]}-{currentFilterOptions.years[currentFilterOptions.years.length-1]}</p>
 				</div>
 
 				{activeGeoData && 
@@ -504,15 +514,15 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 					layerType={"fisheries"}
 					geoData={activeGeoData}
 					selectedCounty={selectedArea}
-					selectedYearStart={selectedYearStart}
-					selectedYearEnd={selectedYearEnd}
-					selectedSpecies={selectedSpecies}
-					selectedEcosystem={selectedEcosystem}
+					selectedYearStart={currentFilter.startYear}
+					selectedYearEnd={currentFilter.endYear}
+					selectedSpecies={currentFilter.species}
+					selectedEcosystem={currentFilter.ecosystem}
 					onCountyClick={handleAreaClick}
 					outliers={computedColorThresholds} 
 				/>}
-      		</div>
-      
+	  		</div>
+	  
 			{/* Right panel */}
 			<div className="right-panel">
 
@@ -527,14 +537,12 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 				{activeTab === "filter" && (
 					<div className="rp-content">
 						<FisheriesFilterMenu 
-							key={dataset} // force a rerender when dataset changes.
-							speciesGroups={speciesGroups}
-							ecosystemTypes={ecosystemTypes}
-							yearRange={[years[0], years[years.length-1]]}
-							counties={counties}
+							key={dataset}
+							filterOptions={currentFilterOptions}
+							currentFilter={currentFilter}
 							onChangeFilter={handleFilterChange}
+							dataset={dataset}
 						/>
-
 					</div>
 				)}
 
@@ -551,12 +559,12 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 						</div>
 					</div>
 					<button className="data-panel-close" onClick={() => {
-					setSelectedArea("");
-					setSelectedCounty("");
-					setSelectedYearStart(null);
-					setSelectedYearEnd(null);
-					setSelectedSpecies("");
-					setSelectedEcosystem("");
+						setSelectedArea("");
+						if (dataset == "comm") {
+							setCommFilter(getDefaultFilterValues(commFilterOptions))
+						} else {
+							setNonCommFilter(getDefaultFilterValues(nonCommFilterOptions))
+						}
 					}}>✕</button>
 				</div>
 
@@ -657,6 +665,6 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 					</table>)}
 				</div>
 			</>)}
-    	</div>
-    </div>);
+		</div>
+	</div>);
 }

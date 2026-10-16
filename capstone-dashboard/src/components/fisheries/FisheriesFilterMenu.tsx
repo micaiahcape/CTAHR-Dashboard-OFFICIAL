@@ -1,29 +1,29 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import ReactSlider from "react-slider";
+import { FisheryFilterOptions, FisheryFilterSettings } from "./FisheriesDashboard"
 
 interface FilterProps {
-    speciesGroups: string[];
-    ecosystemTypes: string[];
-    counties: string[];
-    yearRange: [number, number];
+    filterOptions: FisheryFilterOptions,
+    currentFilter: FisheryFilterSettings,
     onChangeFilter: (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => void;
+    dataset: string,
 }
 
-export default function FisheriesFilterMenu({
-    speciesGroups,
-    ecosystemTypes,
-    counties,
-    yearRange,
-    onChangeFilter,
-} : FilterProps) {
-    const [selectedSpecies, setSelectedSpecies] = React.useState(speciesGroups.includes("All Species") ? "All Species" : speciesGroups[0] ?? "")
-    const [selectedEcosystem, setSelectedEcosystem] = React.useState(ecosystemTypes.includes("All Ecosystems") ? "All Ecosystems" : ecosystemTypes[0] ?? "")
-    const [currentYearRange, setCurrentYearRange] = React.useState(yearRange)
-    const [selectedCounty, setSelectedCounty] = React.useState("")
+const pickDefault = (values: string[], aggregateLabel: string) =>
+	values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
 
+export default function FisheriesFilterMenu({
+    filterOptions,
+    currentFilter,
+    onChangeFilter,
+    dataset
+} : FilterProps) {
+    const [selectedSpecies, setSelectedSpecies] = React.useState <string> (currentFilter.species)
+    const [selectedEcosystem, setSelectedEcosystem] = React.useState <string> (currentFilter.ecosystem)
+    const [selectedCounty, setSelectedCounty] = React.useState("")
+    const [currentYearRange, setCurrentYearRange] = React.useState <[number, number]> ([currentFilter.startYear, currentFilter.endYear])
 
     // every time the state updates, send to the parent.
     useEffect(() => {
@@ -31,21 +31,26 @@ export default function FisheriesFilterMenu({
         onChangeFilter(currentYearRange[0], currentYearRange[1], selectedCounty, selectedSpecies, selectedEcosystem)
     }, [currentYearRange, selectedCounty, selectedSpecies, selectedEcosystem])
 
-    /*useEffect(() => {
-        console.log("DATASET CHANGED");
-        setSelectedDataset(dataset)
-        setSelectedSpecies(speciesGroups.includes("All Species") ? "All Species" : speciesGroups[0] ?? "")
-        setSelectedEcosystem(ecosystemTypes.includes("All Ecosystems") ? "All Ecosystems" : ecosystemTypes[0] ?? "")
-        setCurrentYearRange([...yearRange])
-        setSelectedCounty("")
-    }, [dataset])*/
+    // run only when dataset updates. This is all bundled in one update.
+    useEffect(() => {
+        if (selectedEcosystem === "") {
+            setSelectedSpecies(pickDefault(filterOptions.species_list, "All Species"))
+            setSelectedEcosystem(pickDefault(filterOptions.ecosystem_list, "All Ecosystems"))
+            setCurrentYearRange([filterOptions.years[0], filterOptions.years[filterOptions.years.length - 1]])
+        }
+    }, [dataset])
+
+    const minYear = filterOptions.years[0]
+    const maxYear = filterOptions.years[filterOptions.years.length - 1]
 
     const calculatedMarginLeft = (() => {
-        const range = yearRange[1] - yearRange[0];
-        const leftPercent = ((currentYearRange[0] - yearRange[0]) / range) * 100;
-        const rightPercent = ((currentYearRange[1] - yearRange[0]) / range) * 100;
+        const range = maxYear - minYear;
+        const leftPercent = ((currentYearRange[0] - minYear) / range) * 100;
+        const rightPercent = ((currentYearRange[1] - minYear) / range) * 100;
         return ((leftPercent + rightPercent) / 2) + "%";
     }) ();
+
+    if (selectedEcosystem == "") return (<p>Please wait...</p>)
 
     return(
         <>
@@ -60,13 +65,10 @@ export default function FisheriesFilterMenu({
                 style={{ width: "100%" }}
                 onClick={() => {
                     setSelectedCounty("");
-                    setCurrentYearRange(yearRange)
-                    setSelectedSpecies(speciesGroups.includes("All Species") ? "All Species" : speciesGroups[0] ?? "");
-                    setSelectedEcosystem(ecosystemTypes.includes("All Ecosystems") ? "All Ecosystems" : ecosystemTypes[0] ?? "");
-                }}
-                >
-                ↺ Reset Filters
-                </button>
+                    setCurrentYearRange([minYear, maxYear])
+                    setSelectedSpecies(pickDefault(filterOptions.species_list, "All Species"));
+                    setSelectedEcosystem(pickDefault(filterOptions.ecosystem_list, "All Ecosystems"));
+                }}>↺ Reset Filters</button>
             </div>
 
             {/* County */}
@@ -78,7 +80,7 @@ export default function FisheriesFilterMenu({
                 onChange={(e) => setSelectedCounty(e.target.value)}
                 >
                 <option value="">All Counties</option>
-                {counties.map((c) => (
+                {filterOptions.counties_list.map((c) => (
                     <option key={c}>{c}</option>
                 ))}
                 </select>
@@ -95,8 +97,8 @@ export default function FisheriesFilterMenu({
                 value={currentYearRange}
                 minDistance={0}
                 pearling={true}
-                min={yearRange[0]}
-                max={yearRange[1]}
+                min={minYear}
+                max={maxYear}
                 className="horizontal-slider"
                 thumbClassName="year-thumb"
                 trackClassName="year-track"
@@ -109,7 +111,7 @@ export default function FisheriesFilterMenu({
             <div className="rp-section">
                 <div className="filter-label">Species Group</div>
                 <div className="button-group">
-                {speciesGroups.map((s) => (
+                {filterOptions.species_list.map((s) => (
                     <button
                     key={s}
                     className={`filter-btn ${selectedSpecies === s ? "active" : ""}`}
@@ -122,7 +124,7 @@ export default function FisheriesFilterMenu({
             <div className="rp-section">
                 <div className="filter-label">Ecosystem Type</div>
                 <div className="button-group">
-                {ecosystemTypes.map((e) => (
+                {filterOptions.ecosystem_list.map((e) => (
                     <button
                     key={e}
                     className={`filter-btn ${selectedEcosystem === e ? "active" : ""}`}
