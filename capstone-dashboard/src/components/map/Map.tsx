@@ -115,8 +115,6 @@ function GeoJSONLayer({
     const field: FeatureValueField = layerType === "extents" ? "relative_change" : "total_exchange_value";
     const isExtents = layerType === "extents";
 
-    console.log(geoData)
-
     const geojsonLayer = L.geoJSON(geoData as GeoJsonObject, {
       style: (feature) => {
         const value = Number(feature?.properties?.[field]) || 0;
@@ -136,9 +134,7 @@ function GeoJSONLayer({
 
         const label = isExtents
           ? `${feature.properties.moku} — ${feature.properties.island}`
-          : mapType === "comm"
-          ? `${feature.properties.area_name}`
-          : `County: ${feature.properties.county}`;
+          : feature.properties.name
         
         let formattedValue: String = "";
         if (isExtents) {
@@ -183,7 +179,7 @@ function GeoJSONLayer({
           click: () => {
             const key = isExtents
               ? feature.properties.moku_key
-              : feature.properties.area_name
+              : feature.properties.name
             onCountyClick?.(String(key ?? ""));
           },
           mouseover: (e: L.LeafletMouseEvent) => {
@@ -192,7 +188,7 @@ function GeoJSONLayer({
           mouseout: (e: L.LeafletMouseEvent) => {
             const featureKey = isExtents
               ? feature.properties.moku_key
-              : feature.properties.area_name
+              : feature.properties.name
             const isSel = selectedCounty !== "" && featureKey === selectedCounty;
             e.target.setStyle({ fillOpacity: isSel ? 0.65 : 0.9 });
           },
@@ -251,7 +247,6 @@ export default function Map({
   }
 
   const recalculatedThresholds = (() => {
-    console.log(outliers[0], outliers[1])
     const increment = (outliers[1] - outliers[0]) / numWholeSegments
     const recalc = [];
 
@@ -270,16 +265,13 @@ export default function Map({
         recalc.push(fixed_low_outlier + i * (fixed_increment))
       }
 
-      console.log(recalc);
       return recalc;
-
     } else {
 
       for (let i = 0; i < numWholeSegments + 1; i++) {
         recalc.push(Math.round((outliers[0] + i * (increment)) * 10) / 10)
       }
 
-      console.log(recalc);
       return recalc;
     }
   }) ();
@@ -300,7 +292,6 @@ export default function Map({
         }
       }
     }
-    console.log(colors)
     return colors;
   }) ()
    

@@ -31,15 +31,6 @@ export default function FisheriesFilterMenu({
         onChangeFilter(currentYearRange[0], currentYearRange[1], selectedCounty, selectedSpecies, selectedEcosystem)
     }, [currentYearRange, selectedCounty, selectedSpecies, selectedEcosystem])
 
-    // run only when dataset updates. This is all bundled in one update.
-    useEffect(() => {
-        if (selectedEcosystem === "") {
-            setSelectedSpecies(pickDefault(filterOptions.species_list, "All Species"))
-            setSelectedEcosystem(pickDefault(filterOptions.ecosystem_list, "All Ecosystems"))
-            setCurrentYearRange([filterOptions.years[0], filterOptions.years[filterOptions.years.length - 1]])
-        }
-    }, [dataset])
-
     const minYear = filterOptions.years[0]
     const maxYear = filterOptions.years[filterOptions.years.length - 1]
 
@@ -111,9 +102,9 @@ export default function FisheriesFilterMenu({
             <div className="rp-section">
                 <div className="filter-label">Species Group</div>
                 <div className="button-group">
-                {filterOptions.species_list.map((s) => (
+                {filterOptions.species_list.map((s, index) => (
                     <button
-                    key={s}
+                    key={s + "_" + index}
                     className={`filter-btn ${selectedSpecies === s ? "active" : ""}`}
                     onClick={() => setSelectedSpecies(s)}>{s}</button>
                 ))}

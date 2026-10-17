@@ -80,27 +80,28 @@ const formatCurrency = (value: number) =>
 function parseFisheriesGeoJSON(geojson: GeoJSON, datatype: string): DataRow[] {
 	const rows: DataRow[] = [];
 	for (const feat of geojson.features) {
-		const p = feat.properties;
-		const name: string = datatype == "comm" ? String(p.area_id) : String(p.island)
+		const p: any = feat.properties;
+		const name: string = datatype == "comm" ? String(p.area_id) : String(p.island_olelo)
 		const county = normalizeCounty(p.county_olelo)
 
-		const toArr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [v]);
+		const toArr = (v: any): any[] => (Array.isArray(v) ? v : [v]);
 		const years = toArr(p.year).map(Number);
-		const species = toArr(p.species_group).map(String);
-		const ecosystems = toArr(p.ecosystem_type).map(String);
 		const values = toArr(p.exchange_value).map(Number);
+		/* const species = toArr(p.species_group).map(String);
+		const ecosystems = toArr(p.ecosystem_type).map(String);
+		const values = toArr(p.exchange_value).map(Number); */
 	
 		for (let i = 0; i < years.length; i++) {
 			const val = Number(values[i]) || 0;
-			if (val <= 0 || species[i] === "All Species" || ecosystems[i] === "All Ecosystems") continue;
+			if (val <= 0 || p.species_group[i] === "All Species" || p.ecosystem_type[i] === "All Ecosystems") continue;
 			// to prevent double counting, we skip rows that are "All Species" or "All Ecosystems." These values are broken down by specific species and specific ecosystems, which we could use to tally up.
 			
 			rows.push({
 				year: Number(years[i]),
 				area_name: name,
 				county: county,
-				species_group: species[i],
-				ecosystem_type: ecosystems[i],
+				species_group: (typeof p.species_group === "string" ? p.species_group : p.species_group[i]),
+				ecosystem_type: (typeof p.ecosystem_type === "string" ? p.ecosystem_type : p.ecosystem_type[i]),
 				exchange_value: val,
 			});
 		}
@@ -406,17 +407,18 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 
 	// aggregate back to GeoJSON
 	function aggregateGeoJSON (originalGeoJSON: GeoJSON | null) {
+		console.log("The original GeoJSON is: ")
+		console.log(originalGeoJSON)
 		return ({
 			...originalGeoJSON,
-			features: originalGeoJSON?.features
-			.map((feature: GeoFeature) => {
-				const key: any = feature.properties.area_name
+			features: originalGeoJSON?.features.map((feature: GeoFeature) => {
+				const key: any = (dataset == "comm" ? feature.properties.area_id : feature.properties.island_olelo)
 				return {
-				...feature,
-				properties: {
-					...feature.properties,
-					total_exchange_value: filteredTotalsById[key] || 0,
-				},
+					...feature,
+					properties: {
+						name: key,
+						total_exchange_value: filteredTotalsById[key] || 0,
+					},
 				};
 			})
 			.filter((feature: GeoFeature) =>
@@ -427,12 +429,16 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 
 	// re-aggregated GeoJSON. This will get passed down directly to the map layer.
 	const activeGeoData = (dataset == "comm" ? aggregateGeoJSON(commGeoJSON) : aggregateGeoJSON(nonCommGeoJSON))
-	
+
+	console.log("The active GeoData is: ")
+	console.log(activeGeoData)
+
 	// determine which filter to use.
 	const currentFilter: FisheryFilterSettings = (dataset == "comm" ? commFilter : nonCommFilter)
 	const currentFilterOptions: FisheryFilterOptions = (dataset == "comm" ? commFilterOptions : nonCommFilterOptions)
 	
 	const handleAreaClick = (areaId: string) => {
+		console.log(areaId)
 		const next = selectedArea === areaId ? "" : areaId;
 		setSelectedArea(next);
 		setShowRawData(false);
@@ -450,6 +456,8 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	const bySpecies: Record<string, number> = {};
 	const byEcosystem: Record<string, number> = {};
 
+	console.log(panelRows)
+
 	panelRows.forEach((row) => {
 		byYear[row.year] = (byYear[row.year] || 0) + row.exchange_value;
 		bySpecies[row.species_group] = (bySpecies[row.species_group] || 0) + row.exchange_value;
@@ -459,6 +467,8 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	const yearEntries = Object.entries(byYear)
 		.map(([k, v]) => [Number(k), v] as [number, number])
 		.sort(([a], [b]) => a - b);
+
+	console.log(yearEntries)
 
 	const speciesEntries = Object.entries(bySpecies).sort(([, a], [, b]) => b - a);
 	const ecosystemEntries = Object.entries(byEcosystem).sort(([, a], [, b]) => b - a);
@@ -505,7 +515,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 			{/* Map */}
 			<div className="central-panel">
 				<div className="summary-display">
-					<p>{(dataset == "comm") ? "Commercial" : "Non-commercial"} fisheries data, with <span className="summary-highlight">{(!currentFilter.species || currentFilter.species === "All Species") ? "ALL" : currentFilter.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!currentFilter.ecosystem || currentFilter.ecosystem === "All Ecosystems") ? "ALL" : currentFilter.ecosystem.toLocaleLowerCase()}</span> ecosystems: {currentFilterOptions.years[0]}-{currentFilterOptions.years[currentFilterOptions.years.length-1]}</p>
+					<p>{(dataset == "comm") ? "Commercial" : "Non-commercial"} fisheries data, with <span className="summary-highlight">{(!currentFilter.species || currentFilter.species === "All Species") ? "ALL" : currentFilter.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!currentFilter.ecosystem || currentFilter.ecosystem === "All Ecosystems") ? "ALL" : currentFilter.ecosystem.toLocaleLowerCase()}</span> ecosystems: {currentFilter.startYear}-{currentFilter.endYear}</p>
 				</div>
 
 				{activeGeoData && 
