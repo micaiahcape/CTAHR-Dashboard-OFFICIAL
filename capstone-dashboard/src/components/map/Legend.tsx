@@ -19,22 +19,6 @@ interface LegendProps {
     onChangeSegment: (seg: number) => void;
 }
 
-function interpolate(clr1: string, clr2: string, val: number) {
-    const r1 = parseInt(clr1.substring(1, 3), 16);
-    const g1 = parseInt(clr1.substring(3, 5), 16);
-    const b1 = parseInt(clr1.substring(5, 7), 16);
-
-    const r2 = parseInt(clr2.substring(1, 3), 16);
-    const g2 = parseInt(clr2.substring(3, 5), 16);
-    const b2 = parseInt(clr2.substring(5, 7), 16);
-
-    let rFinal = Math.round(r1 + (r2 - r1) * val);
-    let gFinal = Math.round(g1 + (g2 - g1) * val);
-    let bFinal = Math.round(b1 + (b2 - b1) * val);
-
-    return `rgb(${rFinal}, ${gFinal}, ${bFinal})`;
-}
-
 export default function Legend({
     layer,
     numericalThresholds, 
@@ -129,6 +113,7 @@ export default function Legend({
                 </div>
 
                 <button onClick={() => {
+                    alert("changing color to default")
                     onChangeColor(defaultColorRange[0], defaultColorRange[1])
                     setColor1(defaultColorRange[0])
                     setColor2(defaultColorRange[1])

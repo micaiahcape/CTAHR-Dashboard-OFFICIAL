@@ -203,8 +203,10 @@ export default function Map({
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
+  const defaultColorRange: [string, string] = layerType == "fisheries" ? ["#FFFFFF", "#ff3300"] : ["#0362fc", "#fc0345"]
+
   const [numWholeSegments, setNumWholeSegments] = useState<number>(layerType == "fisheries" ? 2 : 4)
-  const [colorRange, setColorRange] = useState<[string, string]>(layerType == "fisheries" ? ["#FFFFFF", "#ff3300"] : ["#0362fc", "#fc0345"])
+  const [colorRange, setColorRange] = useState<[string, string]>(defaultColorRange)
 
   useEffect(() => {
     if (layerType === "extents") {
@@ -279,7 +281,7 @@ export default function Map({
       <Legend 
         numericalThresholds={recalculatedThresholds}
         colorRange={colorRange}
-        defaultColorRange={colorRange}
+        defaultColorRange={defaultColorRange}
         scaleColorList={calculatedColorList}
         unit="Total Exchange Value (USD)"
         onChangeColor={handleColorChange}
