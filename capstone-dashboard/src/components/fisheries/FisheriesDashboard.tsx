@@ -336,26 +336,27 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 					<button className={`rp-tab ${activeTab === "viz" ? "active" : ""}`} onClick={() => setActiveTab("viz")}>Data View</button>
 				</div>
 
-				{/* ── FILTER TAB ── */}
-				{activeTab === "filter" && (
-					<FisheriesFilterMenu
-						key={dataset} 
-						filterOptions={currentFilterOptions}
-						currentFilter={currentFilter}
-						onChangeFilter={handleFilterChange}
-						dataset={dataset}
-					/>
-				)}
+				<div style={{padding: "5% 5%"}}>
+					{/* ── FILTER TAB ── */}
+					{activeTab === "filter" && (
+						<FisheriesFilterMenu
+							key={dataset} 
+							filterOptions={currentFilterOptions}
+							currentFilter={currentFilter}
+							onChangeFilter={handleFilterChange}
+						/>
+					)}
 
-				{/* ── VIZ TAB ── */}
-				{activeTab === "viz" && (
-					<CompactDataView 
-						selectedArea={selectedArea}
-						filteredRows={filteredRows}
-						dataset={dataset}
-						resetFiltersOnClose={resetFilter}
-					/>
-				)}
+					{/* ── VIZ TAB ── */}
+					{activeTab === "viz" && (
+						<CompactDataView 
+							selectedArea={selectedArea}
+							filteredRows={filteredRows}
+							dataset={dataset}
+							resetFiltersOnClose={resetFilter}
+						/>
+					)}
+				</div>
 			</div>
 		</div>
 	);

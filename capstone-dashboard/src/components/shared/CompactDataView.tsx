@@ -1,6 +1,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { DataRow } from "../fisheries/FisheriesDashboard";
+import "../dashboard/dashboard.css";
 const LineChart = dynamic(() => import("./LineChart"), { ssr: false });
 
 interface CompactProps {
@@ -30,7 +31,7 @@ export default function CompactDataView ({
     // ----------------------------------
 	// Viz panel data
 	// ----------------------------------
-    
+
 	const panelRows = selectedArea
 		? filteredRows.filter((r) => r.area_name === selectedArea)
 		: [];

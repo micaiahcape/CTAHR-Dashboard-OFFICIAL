@@ -103,7 +103,7 @@ function GeoJSONLayer({
         const value = Number(feature?.properties?.[field]) || 0;
         const featureKey = isExtents
           ? feature?.properties?.moku_key
-          : feature?.properties?.area_name
+          : feature?.properties?.name
         const isSelected = appliedFilters.county !== "" && featureKey === appliedFilters.county;
         return {
           fillColor: getColor(value),

@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from "react";
 import ReactSlider from "react-slider";
 import { FisheryFilterOptions, FisheryFilterSettings } from "./FisheriesDashboard"
+import "../dashboard/dashboard.css";
 
 interface FilterProps {
     filterOptions: FisheryFilterOptions,
     currentFilter: FisheryFilterSettings,
     onChangeFilter: (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => void;
-    dataset: string,
 }
 
 const pickDefault = (values: string[], aggregateLabel: string) =>
@@ -18,7 +18,6 @@ export default function FisheriesFilterMenu({
     filterOptions,
     currentFilter,
     onChangeFilter,
-    dataset
 } : FilterProps) {
     const [selectedSpecies, setSelectedSpecies] = React.useState <string> (currentFilter.species)
     const [selectedEcosystem, setSelectedEcosystem] = React.useState <string> (currentFilter.ecosystem)
@@ -38,18 +37,22 @@ export default function FisheriesFilterMenu({
         const range = maxYear - minYear;
         const leftPercent = ((currentYearRange[0] - minYear) / range) * 100;
         const rightPercent = ((currentYearRange[1] - minYear) / range) * 100;
-        return ((leftPercent + rightPercent) / 2) + "%";
+        const resultantPercent = (leftPercent + rightPercent) / 2;
+
+        if (resultantPercent > 85) {
+            return "85%";
+        } else if (resultantPercent < 15) {
+            return "15%";
+        }
+
+        return (resultantPercent + "%")
+        
     }) ();
 
     if (selectedEcosystem == "") return (<p>Please wait...</p>)
 
-    return(
+    return (
         <>
-            {/* Reset */}
-            {/*<div>{currentYearRange}, {selectedCounty}, {selectedSpecies}, {selectedEcosystem}</div>
-            <div>{yearRange}</div>
-            <div>{speciesGroups}</div>
-            <div>{ecosystemTypes}</div>*/}
             <div className="rp-section">
                 <button
                 className="filter-btn"
@@ -80,8 +83,8 @@ export default function FisheriesFilterMenu({
             {/* Year Range */}
             <div className="rp-section">
                 <div className="filter-label">Year Range</div>
-                <div style={{width: "100%", position: "relative"}}>
-                    <div className="sliderValueHolder" style={{ marginLeft: calculatedMarginLeft}}>{currentYearRange[0]} - {currentYearRange[1]} </div>
+                <div style={{width: "100%", position: "relative", marginBottom: "2%"}}>
+                    <div className="sliderValueHolder" style={{ marginLeft: calculatedMarginLeft}}>{currentYearRange[0]} - {currentYearRange[1]}</div>
                 </div>
                 
                 <ReactSlider 
