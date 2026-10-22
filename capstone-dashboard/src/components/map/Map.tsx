@@ -11,6 +11,7 @@ import { useEffect, useRef, useState} from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 import type { GeoJsonObject } from "geojson";
+import { FisheryFilterSettings } from "../fisheries/FisheriesDashboard";
 import dynamic from "next/dynamic";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -35,27 +36,13 @@ export interface DashboardGeoJSON {
   features: DashboardGeoFeature[];
 }
 
-/*interface ColorThresholds {
-  q1: number;
-  q2: number;
-  q3: number;
-  q4: number;
-}*/
-
 interface MapProps {
-  mapType?: string;
-  layerType?: LayerType;
+  mapType: string;
+  layerType: LayerType;
   geoData: DashboardGeoJSON;
-  selectedCounty: string;
-  selectedYearStart: number | null;
-  selectedYearEnd: number | null;
-  selectedSpecies: string;
-  selectedEcosystem: string;
-  onCountyClick?: (county: string) => void;
-  colorRange: [string, string];
+  appliedFilters: FisheryFilterSettings
+  onCountyClick: (county: string) => void;
   outliers: [number, number]; // an array containing two numbers: the 5th and 95th percentiles. Any number that falls on either side of that extreme will default to the color on that end. Otherwise, the color will be calculated by linear interpolation.
-  numericalThresholds: any;
-  colorList: any;
 }
 
 // accepts two colors in hex format, and outputs an interpolated color
@@ -79,15 +66,11 @@ function GeoJSONLayer({
   mapType,
   layerType,
   geoData,
-  selectedCounty,
-  selectedYearStart,
-  selectedYearEnd,
-  selectedSpecies,
-  selectedEcosystem,
+  appliedFilters,
   colorList,
   numericalThresholds,
   onCountyClick,
-}: Omit<MapProps, "layerType" | "outliers"> & { layerType: LayerType }) {
+}: Omit<MapProps, "layerType" | "outliers"> & { layerType: LayerType, colorList: string[], numericalThresholds: number[] }) {
   const map = useMap();
   const layerRef = useRef<L.GeoJSON | null>(null);
 
@@ -121,7 +104,7 @@ function GeoJSONLayer({
         const featureKey = isExtents
           ? feature?.properties?.moku_key
           : feature?.properties?.area_name
-        const isSelected = selectedCounty !== "" && featureKey === selectedCounty;
+        const isSelected = appliedFilters.county !== "" && featureKey === appliedFilters.county;
         return {
           fillColor: getColor(value),
           fillOpacity: isSelected ? 0.65 : 0.9,
@@ -162,13 +145,13 @@ function GeoJSONLayer({
               `Exchange Value: <b>${formattedValue}</b>`
             )}<br/>
             ${isExtents
-              ? `Ecosystem: ${selectedEcosystem || "All"}`
-              : `Year: ${selectedYearStart || selectedYearEnd
-                  ? `${selectedYearStart ?? "start"} – ${selectedYearEnd ?? "end"}`
+              ? `Ecosystem: ${appliedFilters.ecosystem || "All"}`
+              : `Year: ${appliedFilters.startYear || appliedFilters.endYear
+                  ? `${appliedFilters.startYear ?? "start"} – ${appliedFilters.endYear ?? "end"}`
                   : "All Years"
                 }<br/>
-                 Species: ${selectedSpecies || "All"}<br/>
-                 Ecosystem: ${selectedEcosystem || "All"}`
+                 Species: ${appliedFilters.species|| "All"}<br/>
+                 Ecosystem: ${appliedFilters.ecosystem|| "All"}`
             }
           </div>
         `;
@@ -189,7 +172,7 @@ function GeoJSONLayer({
             const featureKey = isExtents
               ? feature.properties.moku_key
               : feature.properties.name
-            const isSel = selectedCounty !== "" && featureKey === selectedCounty;
+            const isSel = appliedFilters.county !== "" && featureKey === appliedFilters.county;
             e.target.setStyle({ fillOpacity: isSel ? 0.65 : 0.9 });
           },
         });
@@ -205,7 +188,7 @@ function GeoJSONLayer({
         layerRef.current = null;
       }
     };
-  }, [geoData, layerType, mapType, selectedCounty, selectedYearStart, selectedYearEnd, selectedSpecies, selectedEcosystem, getColor, onCountyClick, map]);
+  }, [geoData, layerType, mapType, appliedFilters, getColor, onCountyClick, map]);
 
   return null;
 }
@@ -214,17 +197,13 @@ export default function Map({
   mapType,
   layerType,
   geoData,
-  selectedCounty,
-  selectedYearStart,
-  selectedYearEnd,
-  selectedSpecies,
-  selectedEcosystem,
+  appliedFilters,
   outliers,
   onCountyClick,
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
-  const [numWholeSegments, setNumWholeSegments] = useState<number>(4)
+  const [numWholeSegments, setNumWholeSegments] = useState<number>(layerType == "fisheries" ? 2 : 4)
   const [colorRange, setColorRange] = useState<[string, string]>(layerType == "fisheries" ? ["#FFFFFF", "#ff3300"] : ["#0362fc", "#fc0345"])
 
   useEffect(() => {
@@ -323,11 +302,7 @@ export default function Map({
           mapType={mapType}
           layerType={layerType}
           geoData={geoData}
-          selectedCounty={selectedCounty}
-          selectedYearStart={selectedYearStart}
-          selectedYearEnd={selectedYearEnd}
-          selectedSpecies={selectedSpecies}
-          selectedEcosystem={selectedEcosystem}
+          appliedFilters={appliedFilters}
           onCountyClick={onCountyClick}
           colorList={calculatedColorList}
           numericalThresholds={recalculatedThresholds}
