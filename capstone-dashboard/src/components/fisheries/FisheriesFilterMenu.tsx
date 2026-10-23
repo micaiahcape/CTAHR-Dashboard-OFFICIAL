@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ReactSlider from "react-slider";
 import { FisheryFilterOptions, FisheryFilterSettings } from "./FisheriesDashboard"
+// @ts-ignore CSS
 import "../dashboard/dashboard.css";
 
 interface FilterProps {

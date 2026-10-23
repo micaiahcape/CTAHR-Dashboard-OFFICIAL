@@ -38,11 +38,12 @@ export interface DashboardGeoJSON {
 
 interface MapProps {
   mapType: string;
+  selectedArea: string;
   layerType: LayerType;
   geoData: DashboardGeoJSON;
-  appliedFilters: FisheryFilterSettings
+  appliedFilters: FisheryFilterSettings;
   onCountyClick: (county: string) => void;
-  outliers: [number, number]; // an array containing two numbers: the 5th and 95th percentiles. Any number that falls on either side of that extreme will default to the color on that end. Otherwise, the color will be calculated by linear interpolation.
+  outliers: [number, number]; // an array containing two numbers: the 10th and 90th percentiles. Any number that falls on either side of that extreme will default to the color on that end. Otherwise, the color will be calculated by linear interpolation.
 }
 
 // accepts two colors in hex format, and outputs an interpolated color
@@ -59,7 +60,24 @@ function interpolate(clr1: string, clr2: string, val: number) {
   let gFinal = Math.round(g1 + (g2 - g1) * val);
   let bFinal = Math.round(b1 + (b2 - b1) * val);
 
-  return `rgb(${rFinal}, ${gFinal}, ${bFinal})`;
+  return `#${rFinal.toString(16).padStart(2, "0")}${gFinal.toString(16).padStart(2, "0")}${bFinal.toString(16).padStart(2, "0")}`
+}
+
+function getContrastColor(hexColor: string) {
+  // Remove '#' if present
+  const cleanHex = hexColor.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+  const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+  const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+
+  const a = [r, g, b].map((v) => {
+    return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+
+  const luminance = 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+
+  // Luminance threshold is ~0.179
+  return luminance > 0.179 ? '#000000' : '#FFFFFF';
 }
 
 function GeoJSONLayer({
@@ -69,6 +87,7 @@ function GeoJSONLayer({
   appliedFilters,
   colorList,
   numericalThresholds,
+  selectedArea,
   onCountyClick,
 }: Omit<MapProps, "layerType" | "outliers"> & { layerType: LayerType, colorList: string[], numericalThresholds: number[] }) {
   const map = useMap();
@@ -101,23 +120,19 @@ function GeoJSONLayer({
     const geojsonLayer = L.geoJSON(geoData as GeoJsonObject, {
       style: (feature) => {
         const value = Number(feature?.properties?.[field]) || 0;
-        const featureKey = isExtents
-          ? feature?.properties?.moku_key
-          : feature?.properties?.name
-        const isSelected = appliedFilters.county !== "" && featureKey === appliedFilters.county;
+        const featureKey = feature?.properties?.name
+        const isSelected = selectedArea !== "" && featureKey === selectedArea;
         return {
-          fillColor: getColor(value),
-          fillOpacity: isSelected ? 0.65 : 0.9,
-          color: isSelected ? "#d94801" : "#222",
-          weight: isSelected ? 2.5 : 0.8,
+          fillColor: value != 0 ? getColor(value) : "#b5bdc9",
+          fillOpacity: isSelected ? 0.5 : 0.8,
+          color: isSelected ? "#aeff00" : "white",
+          weight: isSelected ? 5 : 1,
         };
       },
+
       onEachFeature: (feature, layer) => {
         const value = Number(feature?.properties?.[field]) || 0;
-
-        const label = isExtents
-          ? `${feature.properties.moku} — ${feature.properties.island}`
-          : feature.properties.name
+        const label = feature.properties.name
         
         let formattedValue: String = "";
         if (isExtents) {
@@ -132,6 +147,8 @@ function GeoJSONLayer({
           formattedValue = formatCurrency(value)
         }
 
+        const bgcolor = value != 0 ? getColor(value) : "#b5bdc9"
+
         const tooltipContent = `
           <div style="font-size: 13px">
             <strong>${label}</strong><br/>
@@ -139,7 +156,7 @@ function GeoJSONLayer({
               `${feature.properties.year1} area: ${feature.properties.year1Value} km<sup>2</sup> <br/>
               <div style="display: flex">
                 <p style="margin: auto 6px auto 0;">${feature.properties.year2} area: ${feature.properties.year2Value} km<sup>2</sup></p>
-                <b style="background-color: ${getColor(value)}; padding: 1px 2px; font-size: 15px">${formattedValue}</b>
+                <b style="background-color: ${bgcolor}; color: ${getContrastColor(bgcolor)}; padding: 1px 2px; font-size: 15px">${formattedValue}</b>
               </div>`
             ) : (
               `Exchange Value: <b>${formattedValue}</b>`
@@ -160,20 +177,14 @@ function GeoJSONLayer({
 
         layer.on({
           click: () => {
-            const key = isExtents
-              ? feature.properties.moku_key
-              : feature.properties.name
-            onCountyClick?.(String(key ?? ""));
+            onCountyClick?.(String(label ?? ""));
           },
           mouseover: (e: L.LeafletMouseEvent) => {
-            e.target.setStyle({ fillOpacity: 0.65 });
+            e.target.setStyle({ fillOpacity: 0.5 });
           },
           mouseout: (e: L.LeafletMouseEvent) => {
-            const featureKey = isExtents
-              ? feature.properties.moku_key
-              : feature.properties.name
-            const isSel = appliedFilters.county !== "" && featureKey === appliedFilters.county;
-            e.target.setStyle({ fillOpacity: isSel ? 0.65 : 0.9 });
+            const isSel = selectedArea !== "" && label === selectedArea;
+            e.target.setStyle({ fillOpacity: isSel ? 0 : 0.8 });
           },
         });
       },
@@ -188,7 +199,7 @@ function GeoJSONLayer({
         layerRef.current = null;
       }
     };
-  }, [geoData, layerType, mapType, appliedFilters, getColor, onCountyClick, map]);
+  }, [geoData, layerType, mapType, appliedFilters, selectedArea, getColor, onCountyClick, map]);
 
   return null;
 }
@@ -199,18 +210,19 @@ export default function Map({
   geoData,
   appliedFilters,
   outliers,
+  selectedArea,
   onCountyClick,
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
-  const defaultColorRange: [string, string] = layerType == "fisheries" ? ["#FFFFFF", "#ff3300"] : ["#0362fc", "#fc0345"]
+  const defaultColorRange: [string, string] = layerType == "fisheries" ? ["#FFFFFF", "#ff3300"] : ["#0362fc", "#ff3300"]
 
   const [numWholeSegments, setNumWholeSegments] = useState<number>(layerType == "fisheries" ? 2 : 4)
   const [colorRange, setColorRange] = useState<[string, string]>(defaultColorRange)
 
   useEffect(() => {
     if (layerType === "extents") {
-      setColorRange(["#0362fc", "#fc0345"])
+      setColorRange(["#0362fc", "#ff3300"])
     } else if (layerType === "fisheries") {
       setColorRange(["#FFFFFF", "#ff3300"])
     }
@@ -283,7 +295,7 @@ export default function Map({
         colorRange={colorRange}
         defaultColorRange={defaultColorRange}
         scaleColorList={calculatedColorList}
-        unit="Total Exchange Value (USD)"
+        unit={layerType == "fisheries" ? "Total Exchange Value (USD)" : "Relative change in area (%)"}
         onChangeColor={handleColorChange}
         onChangeSegment={handleSegmentChange}
         layer={layerType}
@@ -305,6 +317,7 @@ export default function Map({
           layerType={layerType}
           geoData={geoData}
           appliedFilters={appliedFilters}
+          selectedArea={selectedArea}
           onCountyClick={onCountyClick}
           colorList={calculatedColorList}
           numericalThresholds={recalculatedThresholds}

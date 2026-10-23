@@ -6,7 +6,7 @@ import "../dashboard/dashboard.css";
 import FisheriesFilterMenu from "./FisheriesFilterMenu";
 
 const Map = dynamic(() => import("../map/Map"), { ssr: false });
-const CompactDataView = dynamic(() => import("../shared/CompactDataView"), { ssr: false })
+const CompactDataView = dynamic(() => import("./CompactDataView"), { ssr: false })
 
 export interface DataRow {
   	year: number;
@@ -301,7 +301,6 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	const currentFilterOptions: FisheryFilterOptions = (dataset == "comm" ? commFilterOptions : nonCommFilterOptions)
 	
 	const handleAreaClick = (areaId: string) => {
-		console.log(areaId)
 		const next = selectedArea === areaId ? "" : areaId;
 		setSelectedArea(next);
 		if (next !== "") setActiveTab("viz");
@@ -323,6 +322,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 					appliedFilters={currentFilter}
 					outliers={computedColorThresholds} 
 					onCountyClick={handleAreaClick}
+					selectedArea={selectedArea}
 				/>}
 	  		</div>
 	  

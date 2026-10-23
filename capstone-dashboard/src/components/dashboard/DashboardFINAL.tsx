@@ -1,6 +1,10 @@
 import FisheriesDashboard from "../fisheries/FisheriesDashboard";
+import ExtentsDashboard from "../extents/ExtentsDashboard";
 import FilterSidebar from "./FilterSidebar";
 import { useState } from "react";
+import { IBM_Plex_Sans } from 'next/font/google'
+
+const fnt = IBM_Plex_Sans({weight: "400"})
 
 export default function DashboardFINAL() {
     // fisheries, extents, or recreation (coming soon)
@@ -10,16 +14,18 @@ export default function DashboardFINAL() {
     const [dataset, setDataset] = useState("noncomm")
 
     return (
-        <div className="dashboard-container">
-            {/* Left nav */}
-            <FilterSidebar
-                layer={layer}
-                setLayer={setLayer}
-                datatype={dataset}
-                setDatatype={setDataset}
-            />
+        <div className={fnt.className}>
+            <div className="dashboard-container" >
+                {/* Left nav */}
+                <FilterSidebar
+                    layer={layer}
+                    setLayer={setLayer}
+                    datatype={dataset}
+                    setDatatype={setDataset}
+                />
 
-            <FisheriesDashboard dataset={dataset}/>
+                {layer == "fisheries" ? <FisheriesDashboard dataset={dataset}/> : <ExtentsDashboard dataset={dataset}/>}
+            </div>
         </div>
     )
 }
