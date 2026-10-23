@@ -34,7 +34,10 @@ export default function FilterSidebar({ layer, setLayer, datatype, setDatatype, 
       <div className="left-nav-subtitle">Ecosystem Accounts</div>
 
       <div className={`left-nav-item ${layer === "fisheries" ? "active" : ""}`}>
-        <p onClick={() => handleLayer("fisheries")} className="left-nav-item-title">Fisheries</p>
+        <p onClick={() => {
+          handleLayer("fisheries")
+          handleDataType("noncomm")
+        }} className="left-nav-item-title">Fisheries</p>
         {layer === "fisheries" && (
           <div>
             <p className={`left-nav-subitem ${datatype === "noncomm" ? "active" : ""}`} onClick={() => handleDataType("noncomm")} >Non-Commercial EVs</p>
@@ -45,7 +48,10 @@ export default function FilterSidebar({ layer, setLayer, datatype, setDatatype, 
 
 
       <div className={`left-nav-item ${layer === "extents" ? "active" : ""}`}>
-        <p onClick={() => handleLayer("extents")} className="left-nav-item-title">Extents</p>
+        <p onClick={() => {
+          handleLayer("extents")
+          handleDataType("terrestrial")
+        }} className="left-nav-item-title">Extents</p>
         {layer === "extents" && (
           <div>
             <p className={`left-nav-subitem ${datatype === "terrestrial" ? "active" : ""}`} onClick={() => handleDataType("terrestrial")} >Terrestrial extents</p>
