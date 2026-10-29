@@ -41,6 +41,7 @@ interface MapProps {
   selectedArea: string;
   layerType: LayerType;
   geoData: DashboardGeoJSON;
+  unit?: string;
   appliedFilters: FisheryFilterSettings;
   onCountyClick: (county: string) => void;
   outliers: [number, number]; // an array containing two numbers: the 10th and 90th percentiles. Any number that falls on either side of that extreme will default to the color on that end. Otherwise, the color will be calculated by linear interpolation.
@@ -113,8 +114,19 @@ function GeoJSONLayer({
       layerRef.current.remove();
       layerRef.current = null;
     }
+    
+    let field: string;
 
-    const field: FeatureValueField = layerType === "extents" ? "relative_change" : "total_exchange_value";
+    if (layerType === "extents") {
+      if (mapType === "terrestrial") {
+        field = "relative_change"
+      } else if (mapType === "marine") {
+        field = "value"
+      }
+    } else if (layerType === "fisheries") {
+      field = "total_exchange_value"
+    }
+
     const isExtents = layerType === "extents";
 
     const geojsonLayer = L.geoJSON(geoData as GeoJsonObject, {
@@ -149,29 +161,43 @@ function GeoJSONLayer({
 
         const bgcolor = value != 0 ? getColor(value) : "#b5bdc9"
 
-        const tooltipContent = `
-          <div style="font-size: 13px">
-            <strong>${label}</strong><br/>
-            ${isExtents ? (
+        function getToolTipContent() {
+          if (layerType == "extents" && mapType == "terrestrial") {
+            return (
               `${feature.properties.year1} area: ${feature.properties.year1Value} km<sup>2</sup> <br/>
               <div style="display: flex">
                 <p style="margin: auto 6px auto 0;">${feature.properties.year2} area: ${feature.properties.year2Value} km<sup>2</sup></p>
                 <b style="background-color: ${bgcolor}; color: ${getContrastColor(bgcolor)}; padding: 1px 2px; font-size: 15px">${formattedValue}</b>
+              </div>
+              <p>Ecosystem: ${appliedFilters.ecosystem || "All"}</p>`
+              
+            )
+          } else if (layerType == "extents" && mapType == "marine") {
+            return (
+              `<div style="display: flex">
+                <p style="margin: auto 6px auto 0;">${appliedFilters.variable}: <b style="background-color: ${bgcolor}; color: ${getContrastColor(bgcolor)}; padding: 1px 2px; font-size: 15px">${feature.properties.value} ${feature.properties.unit}</b></p>
+              </div>
+              <p>Year: ${appliedFilters.year || "All"}</p>`
+            )
+          } else {
+            return (
+              `<div>
+                <p>Exchange Value: <b style="background-color: ${bgcolor}; color: ${getContrastColor(bgcolor)}; padding: 1px 2px; font-size: 15px">${formattedValue}</b></p>
+
+                <p>Year: ${appliedFilters.startYear ?? "start"} - ${appliedFilters.endYear ?? "end"}</p>
+                <p>Species: ${appliedFilters.species|| "All"}</p>
+                <p>Ecosystem: ${appliedFilters.ecosystem|| "All"}</p>
               </div>`
-            ) : (
-              `Exchange Value: <b>${formattedValue}</b>`
-            )}<br/>
-            ${isExtents
-              ? `Ecosystem: ${appliedFilters.ecosystem || "All"}`
-              : `Year: ${appliedFilters.startYear || appliedFilters.endYear
-                  ? `${appliedFilters.startYear ?? "start"} – ${appliedFilters.endYear ?? "end"}`
-                  : "All Years"
-                }<br/>
-                 Species: ${appliedFilters.species|| "All"}<br/>
-                 Ecosystem: ${appliedFilters.ecosystem|| "All"}`
-            }
-          </div>
-        `;
+            )
+          }
+        }
+
+        const tooltipContent = `
+        <div style="font-size: 13px">
+          <strong>${label}</strong><br/> 
+          ${getToolTipContent()}
+        </div>`
+
 
         layer.bindTooltip(tooltipContent, { sticky: true });
 
@@ -207,6 +233,7 @@ function GeoJSONLayer({
 export default function Map({
   mapType,
   layerType,
+  unit,
   geoData,
   appliedFilters,
   outliers,
@@ -215,15 +242,15 @@ export default function Map({
 }: MapProps) {
   const position: LatLngExpression = [20.5, -157.5];
 
-  const defaultColorRange: [string, string] = layerType == "fisheries" ? ["#FFFFFF", "#ff3300"] : ["#0362fc", "#ff3300"]
+  const defaultColorRange: [string, string] = (layerType === "extents" && mapType === "terrestrial") ? ["#0362fc", "#ff3300"] : ["#FFFFFF", "#ff3300"]
 
-  const [numWholeSegments, setNumWholeSegments] = useState<number>(layerType == "fisheries" ? 2 : 4)
+  const [numWholeSegments, setNumWholeSegments] = useState<number>((layerType === "extents" && mapType === "terrestrial") ? 4 : 2)
   const [colorRange, setColorRange] = useState<[string, string]>(defaultColorRange)
 
   useEffect(() => {
-    if (layerType === "extents") {
+    if (layerType === "extents" && mapType === "terrestrial") {
       setColorRange(["#0362fc", "#ff3300"])
-    } else if (layerType === "fisheries") {
+    } else {
       setColorRange(["#FFFFFF", "#ff3300"])
     }
   }, [layerType])
@@ -261,8 +288,11 @@ export default function Map({
       return recalc;
     } else {
 
+      let trailingDecimals = 1
+
+      if (mapType == "marine") trailingDecimals = 3;
       for (let i = 0; i < numWholeSegments + 1; i++) {
-        recalc.push(Math.round((outliers[0] + i * (increment)) * 10) / 10)
+        recalc.push(Math.round((outliers[0] + i * (increment)) * Math.pow(10, trailingDecimals)) / Math.pow(10, trailingDecimals))
       }
 
       return recalc;
@@ -271,11 +301,7 @@ export default function Map({
 
   const calculatedColorList = (() => {
     const colors = []
-    if (layerType == "fisheries") {
-      for (let i = 0; i < recalculatedThresholds.length + 1; i++) {
-        colors.push(interpolate(colorRange[0], colorRange[1], i / recalculatedThresholds.length))
-      }
-    } else {
+    if (layerType == "extents" && mapType == "terrestrial") {
       const len = recalculatedThresholds.length
       for (let i = 0; i < recalculatedThresholds.length + 1; i++) {
         if (i >= len / 2){
@@ -283,6 +309,10 @@ export default function Map({
         } else {
           colors.push(interpolate("#b5bdc9", colorRange[0], (Math.ceil(len / 2) - i) / Math.ceil(len / 2)))
         }
+      }
+    } else {
+      for (let i = 0; i < recalculatedThresholds.length + 1; i++) {
+        colors.push(interpolate(colorRange[0], colorRange[1], i / recalculatedThresholds.length))
       }
     }
     return colors;
@@ -295,7 +325,7 @@ export default function Map({
         colorRange={colorRange}
         defaultColorRange={defaultColorRange}
         scaleColorList={calculatedColorList}
-        unit={layerType == "fisheries" ? "Total Exchange Value (USD)" : "Relative change in area (%)"}
+        unit={layerType == "fisheries" ? "Total Exchange Value (USD)" : (mapType == "terrestrial" ? "Relative change in area (%)" : `${appliedFilters.variable} (${unit})`)}
         onChangeColor={handleColorChange}
         onChangeSegment={handleSegmentChange}
         layer={layerType}

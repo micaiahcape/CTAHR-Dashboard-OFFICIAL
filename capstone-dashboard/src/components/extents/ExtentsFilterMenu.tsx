@@ -66,22 +66,6 @@ export default function ExtentsFilterMenu({
                 }}>↺ Reset Filters</button>
             </div>
 
-            {/* County */}
-            {/* <div className="rp-section">
-                <div className="filter-label">County</div>
-                <select
-                className="filter-select"
-                value={selectedCounty}
-                onChange={(e) => setSelectedCounty(e.target.value)}
-                >
-                <option value="">All Counties</option>
-                {filterOptions.map((c) => (
-                    <option key={c}>{c}</option>
-                ))}
-                </select>
-            </div> */}
-
-            {/* Year Range */}
             <div className="rp-section">
                 <div className="filter-label">Year Range</div>
                 <div style={{width: "100%", position: "relative", marginBottom: "2%"}}>

@@ -1,6 +1,7 @@
 import FisheriesDashboard from "../fisheries/FisheriesDashboard";
 import ExtentsDashboard from "../extents/ExtentsDashboard";
 import FilterSidebar from "./FilterSidebar";
+import MarineDashboard from "../marine/MarineDashboard";
 import { useState } from "react";
 import { IBM_Plex_Sans } from 'next/font/google'
 
@@ -24,7 +25,9 @@ export default function DashboardFINAL() {
                     setDatatype={setDataset}
                 />
 
-                {layer == "fisheries" ? <FisheriesDashboard dataset={dataset}/> : <ExtentsDashboard dataset={dataset}/>}
+                {layer == "fisheries" && <FisheriesDashboard dataset={dataset}/>}
+                {(layer == "extents" && dataset == "terrestrial") && <ExtentsDashboard dataset={dataset}/>}
+                {(layer == "extents" && dataset == "marine") && <MarineDashboard dataset={dataset}/>}
             </div>
         </div>
     )
