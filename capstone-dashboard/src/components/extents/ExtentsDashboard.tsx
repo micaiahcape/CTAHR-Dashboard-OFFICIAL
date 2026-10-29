@@ -19,6 +19,12 @@ export interface ExtentsRow {
     area_km2: number;
 }
 
+export interface MarineRow{
+    year: number,
+    moku_key: string,
+    measurements: any // change this
+}
+
 interface TerrestrialGeoJSONProperties {
     realm: string,
     moku_olelo: string,
@@ -27,6 +33,19 @@ interface TerrestrialGeoJSONProperties {
     area_km2: number[],
     year: number[],
     total_area_km2: number
+}
+
+interface MarineGeoJSONProperties {
+    moku_olelo: string,
+    island_olelo: string,
+    year: number[],
+    mean_Chlorophyll_A_ESA: number[],
+    mean_Chlorophyll_A_NPP: number[],
+    mean_max_degree_weeks: number[],
+    mean_Kd490_ESA: number[],
+    mean_PAR_NASA: number[],
+    mean_sea_temp: number[],
+    mean_wave_height: number[]
 }
 
 interface GeoFeature {
@@ -47,21 +66,18 @@ interface DashboardProps {
 
 export interface ExtentsFilterSettings {
     startYear: number,
-    endYear: number,
+    endYear?: number,
     ecosystem?: string, // for terrestrial
-    variable?: string, // for marine
 }
 
 export interface ExtentsFilterOptions {
     ecosystem_list?: string[], // for terrestrial
-    variable_list?: string[], // for marine
     years: number[],
 }
 
 function parseExtentsGeoJSON(geojson: GeoJSON, datatype: string) {
 
     const rows: ExtentsRow[] = []
-
     for (const feat of geojson.features) {
         const f = feat.properties as unknown as TerrestrialGeoJSONProperties
         // thank you AI idk how to fix the above line
@@ -86,7 +102,6 @@ export default function ExtentsDashboard ({ dataset } : DashboardProps) {
 
     // holds the raw GeoJSON files.
     const [terrestrialGeoJSON, setTerrestrialGeoJSON] = useState<GeoJSON | null>(null);
-    /* const [marineGeoJSON, setMarineGeoJSON] = useState<GeoJSON | null>(null); */
 
     // for the selected/clicked polygon.
     const [selectedArea, setSelectedArea] = useState("");
@@ -95,7 +110,6 @@ export default function ExtentsDashboard ({ dataset } : DashboardProps) {
     // Fisheries filters
     const nullFilter: ExtentsFilterSettings = {startYear: -1, endYear: -1}
     const [terrestrialFilter, setTerrestrialFilter] = useState<ExtentsFilterSettings>(nullFilter)
-    /* const [marineFilter, setMarineFilter] = useState<FisheryFilterSettings>(nullFilter) */
 
     // only runs on mount.
     useEffect(() => {
@@ -110,19 +124,20 @@ export default function ExtentsDashboard ({ dataset } : DashboardProps) {
 
     // parse the GeoJSON into rows.
     const terrestrialRowData = useMemo(() => {
-        return terrestrialGeoJSON ? parseExtentsGeoJSON(terrestrialGeoJSON, "") : []
+        return terrestrialGeoJSON ? parseExtentsGeoJSON(terrestrialGeoJSON, "terrestrial") : []
     }, [terrestrialGeoJSON])
 
-    function establishFilterRange(data: ExtentsRow[]) {
+    function establishFilterRange(data: ExtentsRow[] | MarineRow[]) {
         if (data.length <= 0) return {years: [0, 1]}
 
         return ({
             ecosystem_list: [...new Set(data.map((r) => r.ecosystem_type))].sort(),
             years: [...new Set(data.map((d) => d.year))].sort((a, b) => a - b),
-        })
+        }) 
     }
 
     const terrestrialFilterOptions = useMemo(() => establishFilterRange(terrestrialRowData), [terrestrialRowData])
+
 
     if (terrestrialRowData.length == 0) return <div>Loading extents...</div>;
 
@@ -130,16 +145,15 @@ export default function ExtentsDashboard ({ dataset } : DashboardProps) {
 
 	// assign the default filter values based on the computed filter options.
 	function getDefaultFilterValues(filterList: any) {
-		return ({
-			startYear: filterList.years[0],
-			endYear: filterList.years[filterList.years.length - 1],
-			ecosystem: filterList.ecosystem_list[0],
-		})
+        return ({
+            startYear: filterList.years[0],
+            endYear: filterList.years[filterList.years.length - 1],
+            ecosystem: filterList.ecosystem_list[0],
+        })
 	}
 
 	// While the dataset is being processed, "startYear" has a placeholder value of -1. Initialize the filters to their default values once the dataset is processed.
 	if (terrestrialFilter.startYear < 0) {
-        console.log("AAAHHHHHHHH LOOK AT ME IM RUNNING")
 		setTerrestrialFilter(getDefaultFilterValues(terrestrialFilterOptions))
 	}
 
@@ -238,24 +252,19 @@ export default function ExtentsDashboard ({ dataset } : DashboardProps) {
 
     const computedColorThresholds = (() => {
         let sorted: number[]
-        if (dataset === "marine") {
-            // to be filled
 
-        } else if (dataset === "terrestrial") {
-            sorted = Object.values(terrestrialChangesByMoku).map((e: any) => e.relative_change).sort((a, b) => a - b);
-            // restrict to 2 decimal places in terms of %.
-            const percent1 = Math.round(sorted[Math.floor(sorted.length * 0.1)] * 100) / 100
-            const percent9 = Math.round(sorted[Math.floor(sorted.length * 0.9)] * 100) / 100
-            if (percent1 < 0 && percent9 > 0) {
-                if (Math.abs(percent1) > Math.abs(percent9)) {
-                return [percent1, 0-percent1]
-                } else {
-                return [0-percent9, percent9]
-                }
+        sorted = Object.values(terrestrialChangesByMoku).map((e: any) => e.relative_change).sort((a, b) => a - b);
+        // restrict to 2 decimal places in terms of %.
+        const percent1 = Math.round(sorted[Math.floor(sorted.length * 0.1)] * 100) / 100
+        const percent9 = Math.round(sorted[Math.floor(sorted.length * 0.9)] * 100) / 100
+        if (percent1 < 0 && percent9 > 0) {
+            if (Math.abs(percent1) > Math.abs(percent9)) {
+            return [percent1, 0-percent1]
+            } else {
+            return [0-percent9, percent9]
             }
-            return [percent1, percent9]
         }
-        return [0, 0]
+        return [percent1, percent9]
     }) ();
 
     console.log(computedColorThresholds)
