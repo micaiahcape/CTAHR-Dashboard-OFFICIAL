@@ -65,7 +65,7 @@ function parseExtentsGeoJSON(geojson: GeoJSON) {
             const data: any = {}
 
             variablesToMap.forEach((e) => {
-                data[e] = f[e][i]
+                data[e] = f[e as keyof typeof f][i]
             })
 
             rows.push ({
@@ -93,18 +93,20 @@ export default function MarineDashboard ({ dataset } : DashboardProps) {
     const [marineFilter, setMarineFilter] = useState<MarineFilterSettings>(nullFilter)
 
     const columnToDisplay = {
-        mean_Chlorophyll_A_ESA: "Chlorophyll A (from ESA)",
-        mean_Chlorophyll_A_NPP: "Chlorophyll A (from NPP)",
-        mean_max_degree_weeks: "Coral Degree-Weeks", 
-        mean_Kd490_ESA: "Kd490 Turbidity (from ESA)",
-        mean_PAR_NASA: "Photosynthetic Active Radiation (from NASA)", 
-        mean_sea_temp: "Sea Temperature",
-        mean_wave_height: "Wave Height"
+        mean_Chlorophyll_A_ESA: {disp: "Chlorophyll A (from ESA)", unit: "mg/m<sup>3</sup>", safeUnit: "mg/m^3"},
+        mean_Chlorophyll_A_NPP: {disp: "Chlorophyll A (from NPP)", unit: "mg/m<sup>3</sup>", safeUnit: "mg/m^3"},
+        mean_max_degree_weeks: {disp: "Coral Reef Degree Heating Weeks", unit: "°C-weeks", safeUnit: "°C-weeks"},
+        mean_Kd490_ESA: {disp: "Kd490 Turbidity (from ESA)", unit: "m<sup>-1</sup>", safeUnit: "m^-1"},
+        mean_PAR_NASA: {disp: "Photosynthetic Active Radiation (from NASA)", unit: "mol photons m^-2</sup> day<sup>-1</sup>", safeUnit: "mol photons m^-2 day^-1"}, 
+        mean_sea_temp: {disp: "Sea Temperature", unit: "°C", safeUnit: "°C"},
+        mean_wave_height: {disp: "Wave Height", unit: "m", safeUnit: "m"}
     }
 
     const displayToColumn = Object.fromEntries(
-        Object.entries(columnToDisplay).map(([key, value]) => [value, key])
+        Object.entries(columnToDisplay).map(([key, value]) => [value.disp, {column: key, unit: value.unit, safeUnit: value.safeUnit}])
     )
+
+    console.log(displayToColumn)
 
     // only runs on mount.
     useEffect(() => {
@@ -125,7 +127,7 @@ export default function MarineDashboard ({ dataset } : DashboardProps) {
         if (data.length <= 0) return {years: [0, 1]}
 
         return ({
-            variable_list: Object.keys(data[0].measurements).map((e) => columnToDisplay[e]),
+            variable_list: Object.keys(data[0].measurements).map((e) => `${columnToDisplay[e as keyof typeof columnToDisplay].disp}`),
             years: [...new Set(data.map(e => e.year))].sort((a, b) => a - b),
         })
     }
@@ -181,7 +183,7 @@ export default function MarineDashboard ({ dataset } : DashboardProps) {
     const valueByMoku: Record<string, any> = {}
 
     filteredRows.forEach(r => {
-        const currVar = displayToColumn[marineFilter.variable as keyof typeof displayToColumn]
+        const currVar = displayToColumn[marineFilter.variable as keyof typeof displayToColumn].column
         
         valueByMoku[r.moku_key] = currVar && r.measurements[currVar]
     })
@@ -197,8 +199,9 @@ export default function MarineDashboard ({ dataset } : DashboardProps) {
                     ...feat,
                     properties: {
                         value: valueByMoku[key],
-                        variable: currVar, 
+                        variable: currVar.column, 
                         variable_display: marineFilter.variable,
+                        unit: currVar.unit,
                         name: (key && `${key.split("_")[0]} (${key.split("_")[1]})`),
                     }
                 })
@@ -244,6 +247,7 @@ export default function MarineDashboard ({ dataset } : DashboardProps) {
                 <Map
                     mapType={dataset}
                     layerType="extents"
+                    unit={displayToColumn[marineFilter.variable as keyof typeof displayToColumn].safeUnit}
                     geoData={activeGeoData}
                     appliedFilters={currentFilter}
                     selectedArea={selectedArea}

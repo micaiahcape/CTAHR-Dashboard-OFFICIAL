@@ -41,6 +41,7 @@ interface MapProps {
   selectedArea: string;
   layerType: LayerType;
   geoData: DashboardGeoJSON;
+  unit?: string;
   appliedFilters: FisheryFilterSettings;
   onCountyClick: (county: string) => void;
   outliers: [number, number]; // an array containing two numbers: the 10th and 90th percentiles. Any number that falls on either side of that extreme will default to the color on that end. Otherwise, the color will be calculated by linear interpolation.
@@ -174,7 +175,7 @@ function GeoJSONLayer({
           } else if (layerType == "extents" && mapType == "marine") {
             return (
               `<div style="display: flex">
-                <p style="margin: auto 6px auto 0;">${appliedFilters.variable}: <b style="background-color: ${bgcolor}; color: ${getContrastColor(bgcolor)}; padding: 1px 2px; font-size: 15px">${feature.properties.value}</b></p>
+                <p style="margin: auto 6px auto 0;">${appliedFilters.variable}: <b style="background-color: ${bgcolor}; color: ${getContrastColor(bgcolor)}; padding: 1px 2px; font-size: 15px">${feature.properties.value} ${feature.properties.unit}</b></p>
               </div>
               <p>Year: ${appliedFilters.year || "All"}</p>`
             )
@@ -232,6 +233,7 @@ function GeoJSONLayer({
 export default function Map({
   mapType,
   layerType,
+  unit,
   geoData,
   appliedFilters,
   outliers,
@@ -323,7 +325,7 @@ export default function Map({
         colorRange={colorRange}
         defaultColorRange={defaultColorRange}
         scaleColorList={calculatedColorList}
-        unit={layerType == "fisheries" ? "Total Exchange Value (USD)" : "Relative change in area (%)"}
+        unit={layerType == "fisheries" ? "Total Exchange Value (USD)" : (mapType == "terrestrial" ? "Relative change in area (%)" : `${appliedFilters.variable} (${unit})`)}
         onChangeColor={handleColorChange}
         onChangeSegment={handleSegmentChange}
         layer={layerType}

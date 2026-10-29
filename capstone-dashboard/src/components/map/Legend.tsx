@@ -50,7 +50,7 @@ export default function Legend({
                 }
                 return ""
             } else if (layer === "extents") {
-                return `${item}%`
+                return `${item}`
             }
         })
 
