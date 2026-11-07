@@ -1,4 +1,4 @@
-import FisheriesDashboard from "../fisheries/FisheriesDashboard";
+import FisheriesDashboard2 from "../fisheries/FisheriesDashboard2";
 import ExtentsDashboard from "../extents/ExtentsDashboard";
 import FilterSidebar from "./FilterSidebar";
 import MarineDashboard from "../marine/MarineDashboard";
@@ -25,7 +25,7 @@ export default function DashboardFINAL() {
                     setDatatype={setDataset}
                 />
 
-                {layer == "fisheries" && <FisheriesDashboard dataset={dataset}/>}
+                {layer == "fisheries" && <FisheriesDashboard2 dataType={dataset} key={dataset}/>}
                 {(layer == "extents" && dataset == "terrestrial") && <ExtentsDashboard dataset={dataset}/>}
                 {(layer == "extents" && dataset == "marine") && <MarineDashboard dataset={dataset}/>}
             </div>

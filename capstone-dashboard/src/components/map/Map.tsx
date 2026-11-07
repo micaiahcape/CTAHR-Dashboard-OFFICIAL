@@ -16,7 +16,7 @@ import dynamic from "next/dynamic";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const Legend = dynamic(() => import("../map/Legend"), { ssr: false });
+const Legend = dynamic(() => import("../dashboard/Legend"), { ssr: false });
 
 type LayerType = "fisheries" | "extents";
 type FeatureValueField = "relative_change" | "absolute_change" | "total_exchange_value";
@@ -48,7 +48,7 @@ interface MapProps {
 }
 
 // accepts two colors in hex format, and outputs an interpolated color
-function interpolate(clr1: string, clr2: string, val: number) {
+export function interpolate(clr1: string, clr2: string, val: number) {
   const r1 = parseInt(clr1.substring(1, 3), 16);
   const g1 = parseInt(clr1.substring(3, 5), 16);
   const b1 = parseInt(clr1.substring(5, 7), 16);

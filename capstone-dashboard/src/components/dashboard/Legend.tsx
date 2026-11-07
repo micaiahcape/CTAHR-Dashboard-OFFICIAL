@@ -6,57 +6,37 @@ Scale component. Takes:
 */
 import { text } from "stream/consumers";
 import React, { useState, useEffect } from "react";
-import "./legend.css"
+import "../map/legend.css"
+
+interface ColorThresholds {
+    colors: string[],
+    thresholds: number[],
+    thresholdDisplays: string[],
+}
 
 interface LegendProps {
-    layer: string;
-    numericalThresholds: number[];
-    colorRange: [string, string];
-    defaultColorRange: [string, string];
-    scaleColorList: string[];
+    colorBreakdowns: ColorThresholds,
     unit: string;
     onChangeColor: (clr1: string, clr2: string) => void;
     onChangeSegment: (seg: number) => void;
 }
 
 export default function Legend({
-    layer,
-    numericalThresholds, 
-    colorRange, 
-    defaultColorRange,
-    scaleColorList,
+    colorBreakdowns,
     unit,
     onChangeColor,
     onChangeSegment,
 }: LegendProps) {
 
-    const [color1, setColor1] = React.useState(colorRange[0])
-    const [color2, setColor2] = React.useState(colorRange[1])
-    const [numWholeSegments, setNumWholeSegments] = React.useState(numericalThresholds.length - 1)
+    const defaultColor1 = colorBreakdowns.colors[0]
+    const defaultColor2 = colorBreakdowns.colors[colorBreakdowns.colors.length - 1]
+    const [color1, setColor1] = React.useState(defaultColor1)
+    const [color2, setColor2] = React.useState(defaultColor2)
+    const [numWholeSegments, setNumWholeSegments] = React.useState(colorBreakdowns.thresholds.length - 1)
 
     const wholeSegmentArray = numWholeSegments > 0 ? Array(numWholeSegments).fill(0) : Array(1).fill(0)
-    
-    const scaleValuesDisplay = (() => {
-        
-        const finalValue = numericalThresholds[numWholeSegments]
-        const finalUnit = (finalValue > 1000000 ? "M" : "K")
 
-        const fixedScaleValues: string[] = numericalThresholds.map((item: number): string => {
-            if (layer === "fisheries") {
-                if (item < 100000 || (item < 1000000 && finalUnit == "K")) {
-                    return (item / 1000) + "K"
-                } else if (item > 100000 || (item < 1000000 && finalUnit == "M")) {
-                    return (item / 1000000) + "M"
-                }
-                return ""
-            } else if (layer === "extents") {
-                return `${item}`
-            }
-        })
-
-        return fixedScaleValues;
-        
-    }) ();
+    const scaleValuesDisplay= colorBreakdowns.thresholdDisplays
 
     // returns a string specifying where the grid templates are at.
     const labelPositionCalc: string = (() => {
@@ -80,15 +60,15 @@ export default function Legend({
             <div className="legendHolder">
                 <div className="scaleBarHolder">
                     {/* lower outlier. Make the width half of a standard segment. */}
-                    <div className="indivScaleBar" style={{ backgroundColor: colorRange[0], width: `${100 / (numWholeSegments + 1) / 2}%` }} />
+                    <div className="indivScaleBar" style={{ backgroundColor: defaultColor1, width: `${100 / (numWholeSegments + 1) / 2}%` }} />
 
                     {/* standard segments. width = 100% / (numsegments + 1) */}
                     {wholeSegmentArray.map((_, index) => (
-                        <div key={index} className="indivScaleBar" style={{ backgroundColor: scaleColorList[index+1], width: `${100 / (numWholeSegments + 1)}%` }} />
+                        <div key={index} className="indivScaleBar" style={{ backgroundColor: colorBreakdowns.colors[index+1], width: `${100 / (numWholeSegments + 1)}%` }} />
                     ))}
 
                     {/* upper outlier. Make the width half of a standard segment. */}
-                    <div className="indivScaleBar" style={{ backgroundColor: colorRange[1], width: `${100 / (numWholeSegments + 1) / 2}%` }} />
+                    <div className="indivScaleBar" style={{ backgroundColor: defaultColor2, width: `${100 / (numWholeSegments + 1) / 2}%` }} />
                     
                 </div>
 
@@ -114,9 +94,9 @@ export default function Legend({
 
                 <button onClick={() => {
                     alert("changing color to default")
-                    onChangeColor(defaultColorRange[0], defaultColorRange[1])
-                    setColor1(defaultColorRange[0])
-                    setColor2(defaultColorRange[1])
+                        /*onChangeColor(defaultColorRange[0], defaultColorRange[1])
+                        setColor1(defaultColorRange[0])
+                        setColor2(defaultColorRange[1])*/
                     }} className="submitBtn">Reset</button>
                 
                 <button onClick={() => onChangeColor(color1, color2)} className="submitBtn">OK</button>

@@ -9,23 +9,23 @@ const Map = dynamic(() => import("../map/Map"), { ssr: false });
 const CompactDataView = dynamic(() => import("./CompactDataView"), { ssr: false })
 
 export interface DataRow {
-  	year: number;
+	year: number;
 	area_name: string;
-  	species_group: string;
-  	ecosystem_type: string;
-  	exchange_value: number;
+	species_group: string;
+	ecosystem_type: string;
+	exchange_value: number;
 	county: string;
 }
 
 interface GeoFeature {
-  	type: string;
-  	properties: Record<string, unknown>;
+	type: string;
+	properties: Record<string, unknown>;
 	geometry: unknown;
 }
 
 interface GeoJSON {
-  	type: string;
-  	features: GeoFeature[];
+	type: string;
+	features: GeoFeature[];
 }
 
 interface DashboardProps {
@@ -48,15 +48,15 @@ export interface FisheryFilterOptions {
 }
 
 function normalizeCounty(raw: any): string {
-  	const map: Record<string, string> = {
+	const map: Record<string, string> = {
 		"Hawaiʻi": "Hawaii",
 		"Kauaʻi": "Kauai",
 		"Maui": "Maui",
 		"Honolulu": "Honolulu",
 		"Lanai": "Maui",
 		"Molokai": "Maui",
-  	};
-  	return map[raw] ?? raw;
+	};
+	return map[raw] ?? raw;
 }
 
 /*******************
@@ -77,12 +77,12 @@ function parseFisheriesGeoJSON(geojson: GeoJSON, datatype: string): DataRow[] {
 		const toArr = (v: any): any[] => (Array.isArray(v) ? v : [v]);
 		const years = toArr(p.year).map(Number);
 		const values = toArr(p.exchange_value).map(Number);
-	
+
 		for (let i = 0; i < years.length; i++) {
 			const val = Number(values[i]) || 0;
 			if (val <= 0 || p.species_group[i] === "All Species" || p.ecosystem_type[i] === "All Ecosystems") continue;
 			// to prevent double counting, we skip rows that are "All Species" or "All Ecosystems." These values are broken down by specific species and specific ecosystems, which we could use to tally up.
-			
+
 			rows.push({
 				year: Number(years[i]),
 				area_name: name,
@@ -97,7 +97,7 @@ function parseFisheriesGeoJSON(geojson: GeoJSON, datatype: string): DataRow[] {
 	return rows;
 }
 
-export default function FisheriesDashboard ({ dataset } : DashboardProps) {
+export default function FisheriesDashboard({ dataset }: DashboardProps) {
 	const [geoData, setGeoData] = useState<GeoJSON | null>(null);
 
 	// holds the raw GeoJSON files.
@@ -107,7 +107,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	const [activeTab, setActiveTab] = useState<"filter" | "viz">("filter");
 
 	// Fisheries filters
-	const nullFilter: FisheryFilterSettings = {startYear: -1, endYear: -1, county: "", species: "", ecosystem: ""}
+	const nullFilter: FisheryFilterSettings = { startYear: -1, endYear: -1, county: "", species: "", ecosystem: "" }
 	const [commFilter, setCommFilter] = useState<FisheryFilterSettings>(nullFilter)
 	const [nonCommFilter, setNonCommFilter] = useState<FisheryFilterSettings>(nullFilter)
 
@@ -124,7 +124,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 				fetch("/fisheriesdata/USED_IN_PROJECT/10_14_2026_comm_EV_byCatchmentArea.geojson"),
 				fetch("/fisheriesdata/USED_IN_PROJECT/10_14_2026_noncomm_EV_byIsland.geojson"),
 			]);
-			const [c, nc] = await Promise.all([commGeo.json(), nonCommGeo.json()]);		
+			const [c, nc] = await Promise.all([commGeo.json(), nonCommGeo.json()]);
 			setCommGeoJSON(c)
 			setNonCommGeoJSON(nc)
 		}
@@ -145,8 +145,8 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	// ======== establish the filter ranges and the filters' default values. ========
 
 	function establishFilterRange(data: DataRow[]) {
-		if (data.length <= 0) return {years: [0, 1]}
-		
+		if (data.length <= 0) return { years: [0, 1] }
+
 		const species_list = [...new Set(data.map((r) => r.species_group))].sort()
 		const ecosystem_list = [...new Set(data.map((r) => r.ecosystem_type))].sort()
 
@@ -166,15 +166,15 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 		})
 	}
 
-	const commFilterOptions = useMemo(() => {return establishFilterRange(commRowData)}, [commRowData])
-	const nonCommFilterOptions = useMemo(() => {return establishFilterRange(nonCommRowData)}, [nonCommRowData])
+	const commFilterOptions = useMemo(() => { return establishFilterRange(commRowData) }, [commRowData])
+	const nonCommFilterOptions = useMemo(() => { return establishFilterRange(nonCommRowData) }, [nonCommRowData])
 
 	if (commRowData.length == 0 || nonCommRowData.length == 0) return <div>Loading fisheries...</div>;
 
 	// ======== if data isn't loaded, it short circuits here. ========
 
 	const pickDefault = (values: string[], aggregateLabel: string) =>
-	values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
+		values.includes(aggregateLabel) ? aggregateLabel : values[0] ?? "";
 
 	// assign the default filter values based on the computed filter options.
 	function getDefaultFilterValues(filterList: any) {
@@ -249,7 +249,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 				(filter.ecosystem === "All Ecosystems" || row.ecosystem_type === filter.ecosystem)
 			)
 		})
-	}) ();
+	})();
 
 	// ======== Transform the filtered data, merge it back to GeoJSON and compute the color thresholds. ========
 
@@ -266,10 +266,10 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 		const percent1 = Math.round(sorted[Math.floor(sorted.length * 0.1)])
 		const percent9 = Math.round(sorted[Math.floor(sorted.length * 0.9)])
 		return [percent1, percent9]
-	}) ();
+	})();
 
 	// aggregate back to GeoJSON
-	function aggregateGeoJSON (originalGeoJSON: GeoJSON | null) {
+	function aggregateGeoJSON(originalGeoJSON: GeoJSON | null) {
 		console.log("The original GeoJSON is: ")
 		console.log(originalGeoJSON)
 		return ({
@@ -283,8 +283,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 						total_exchange_value: filteredTotalsById[key] || 0,
 					},
 				};
-			})
-			.filter((feature: GeoFeature) =>
+			}).filter((feature: GeoFeature) =>
 				(feature.properties.total_exchange_value as number) > 0
 			),
 		});
@@ -299,7 +298,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 	// determine which filter to use.
 	const currentFilter: FisheryFilterSettings = (dataset == "comm" ? commFilter : nonCommFilter)
 	const currentFilterOptions: FisheryFilterOptions = (dataset == "comm" ? commFilterOptions : nonCommFilterOptions)
-	
+
 	const handleAreaClick = (areaId: string) => {
 		const next = selectedArea === areaId ? "" : areaId;
 		setSelectedArea(next);
@@ -314,33 +313,33 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 					<p>{(dataset == "comm") ? "Commercial" : "Non-commercial"} fisheries data, with <span className="summary-highlight">{(!currentFilter.species || currentFilter.species === "All Species") ? "ALL" : currentFilter.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!currentFilter.ecosystem || currentFilter.ecosystem === "All Ecosystems") ? "ALL" : currentFilter.ecosystem.toLocaleLowerCase()}</span> ecosystems: {currentFilter.startYear}-{currentFilter.endYear}</p>
 				</div>
 
-				{activeGeoData && 
-				<Map
-					mapType={dataset}
-					layerType="fisheries"
-					geoData={activeGeoData}
-					appliedFilters={currentFilter}
-					outliers={computedColorThresholds} 
-					onCountyClick={handleAreaClick}
-					selectedArea={selectedArea}
-				/>}
-	  		</div>
-	  
+				{activeGeoData &&
+					<Map
+						mapType={dataset}
+						layerType="fisheries"
+						geoData={activeGeoData}
+						appliedFilters={currentFilter}
+						outliers={computedColorThresholds}
+						onCountyClick={handleAreaClick}
+						selectedArea={selectedArea}
+					/>}
+			</div>
+
 			{/* Right panel */}
 			<div className="right-panel">
 
 				{/* Tab header */}
 				<div className="right-panel-tabs">
-					<button className={`rp-tab ${activeTab === "filter" ? "active" : ""}`} 
-					onClick={() => setActiveTab("filter")}>Filter</button>
+					<button className={`rp-tab ${activeTab === "filter" ? "active" : ""}`}
+						onClick={() => setActiveTab("filter")}>Filter</button>
 					<button className={`rp-tab ${activeTab === "viz" ? "active" : ""}`} onClick={() => setActiveTab("viz")}>Data View</button>
 				</div>
 
-				<div style={{padding: "5% 5%"}}>
+				<div style={{ padding: "5% 5%" }}>
 					{/* ── FILTER TAB ── */}
 					{activeTab === "filter" && (
 						<FisheriesFilterMenu
-							key={dataset} 
+							key={dataset}
 							filterOptions={currentFilterOptions}
 							currentFilter={currentFilter}
 							onChangeFilter={handleFilterChange}
@@ -349,7 +348,7 @@ export default function FisheriesDashboard ({ dataset } : DashboardProps) {
 
 					{/* ── VIZ TAB ── */}
 					{activeTab === "viz" && (
-						<CompactDataView 
+						<CompactDataView
 							selectedArea={selectedArea}
 							filteredRows={filteredRows}
 							dataset={dataset}
