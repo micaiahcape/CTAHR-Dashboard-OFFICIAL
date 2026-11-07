@@ -27,7 +27,7 @@ interface DashboardProps<TRow, TFilter> {
         }
         filterFn: (rows: TRow[], filter: TFilter) => Record<string, any>;
         colorCalculationFn: (agg: Record<string, any>, defaultColors?: [string, string], numWholeSegments?: number) => colorThresholds;
-        newGeoJSONFn: (originalGeoJSON: any, agg: Record<string, any>) => any;
+        newGeoJSONFn: (originalGeoJSON: any, agg: Record<string, any>, appliedFilter?: Record<string, any>) => any;
     },
     getToolTip: (feat: any, appliedFilters: TFilter, colorThresholds: colorThresholds) => React.ReactNode,
     getTitle: (appliedFilters: TFilter) => React.ReactNode,

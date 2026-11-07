@@ -1,5 +1,6 @@
 import FisheriesDashboard2 from "../fisheries/FisheriesDashboard2";
 import ExtentsDashboard2 from "../extents/ExtentsDashboard2";
+import MarineDashboard2 from "../marine/MarineDashboard2";
 import FilterSidebar from "./FilterSidebar";
 import MarineDashboard from "../marine/MarineDashboard";
 import { useState } from "react";
@@ -27,7 +28,7 @@ export default function DashboardFINAL() {
 
                 {layer == "fisheries" && <FisheriesDashboard2 dataType={dataset} key={dataset}/>}
                 {(layer == "extents" && dataset == "terrestrial") && <ExtentsDashboard2 />}
-                {(layer == "extents" && dataset == "marine") && <MarineDashboard dataset={dataset}/>}
+                {(layer == "extents" && dataset == "marine") && <MarineDashboard2/>}
             </div>
         </div>
     )
