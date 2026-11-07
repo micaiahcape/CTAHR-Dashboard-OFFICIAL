@@ -12,6 +12,7 @@ import "leaflet/dist/leaflet.css";
 interface colorThresholds {
     colors: string[],
     thresholds: number[],
+    thresholdDisplays: string[]
 }
 
 const position: LatLngExpression = [20.5, -157.5];
@@ -25,11 +26,7 @@ interface DashboardProps<TRow, TFilter> {
             defaultFilter: TFilter
         }
         filterFn: (rows: TRow[], filter: TFilter) => Record<string, any>;
-        colorCalculationFn: (agg: Record<string, any>, defaultColors?: [string, string], numWholeSegments?: number) => {
-            colors: string[],
-            thresholds: number[],
-            thresholdDisplays: string[]
-        }
+        colorCalculationFn: (agg: Record<string, any>, defaultColors?: [string, string], numWholeSegments?: number) => colorThresholds;
         newGeoJSONFn: (originalGeoJSON: any, agg: Record<string, any>) => any;
     },
     getToolTip: (feat: any, appliedFilters: TFilter, colorThresholds: colorThresholds) => React.ReactNode,

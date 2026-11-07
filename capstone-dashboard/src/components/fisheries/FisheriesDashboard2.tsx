@@ -208,8 +208,8 @@ function fisheriesLfTooltip (feat: any, appliedFilters: FisheryFilterSettings, c
 
     return (
         <div>
+            <p style={{ fontSize: "15px", fontWeight: "bold", paddingBottom: "3%" }}>{feat.properties.name}</p>
             <p>Exchange Value: <b style={{backgroundColor: `${bgcolor}`, color: `${getContrastColor(bgcolor)}`, padding: "1px 2px", fontSize: "15px"}}>{formattedValue}</b></p>
-
             <p>Year: {appliedFilters.startYear ?? "start"} - {appliedFilters.endYear ?? "end"}</p>
             <p>Species: {appliedFilters.species || "All"}</p>
             <p>Ecosystem: {appliedFilters.ecosystem || "All"}</p>
