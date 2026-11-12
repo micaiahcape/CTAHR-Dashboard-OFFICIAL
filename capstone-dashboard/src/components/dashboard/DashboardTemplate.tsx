@@ -15,6 +15,14 @@ interface colorThresholds {
     thresholdDisplays: string[]
 }
 
+interface FilterDescription {
+    btnVars: string[],
+    dropdownVars: string[],
+    singleRangeVars: string[],
+    doubleRangeVars: string[],
+    displayText: Record<string, string> // must be "variable name": "display"
+}
+
 const position: LatLngExpression = [20.5, -157.5];
 
 interface DashboardProps<TRow, TFilter> {
@@ -23,7 +31,8 @@ interface DashboardProps<TRow, TFilter> {
         parseGeoJSONFn: (rawGeoJSON: any[]) => TRow[];
         establishFilterFn: (rows: TRow[]) => {
             filterOptions: Record<string, any[]>,
-            defaultFilter: TFilter
+            defaultFilter: TFilter,
+            filterDescriptions: FilterDescription,
         }
         filterFn: (rows: TRow[], filter: TFilter) => Record<string, any>;
         colorCalculationFn: (agg: Record<string, any>, defaultColors?: [string, string], numWholeSegments?: number) => colorThresholds;
@@ -43,7 +52,7 @@ export default function DashboardTemplate<TRow, TFilter> ({
     const [selectedArea, setSelectedArea] = useState("");
     const [activeTab, setActiveTab] = useState<"filter" | "viz">("filter");
 
-    // Fisheries filters
+    // filters
     const [currentFilter, setCurrentFilter] = useState<TFilter | {}>({})
 
     // for the legend
@@ -89,6 +98,14 @@ export default function DashboardTemplate<TRow, TFilter> ({
 
     // reaggregate to GeoJSON
     const newGeoJSON = uniqFunctions.newGeoJSONFn(geoData, aggByLocation)
+
+    /* ============ STATE CHANGING FUNCTIONS BELOW. CALLED BY CHILD COMPONENTS ============ */
+
+    // for changing the filter
+    const handleFilterChange = (はい: Record<string, any>) => {
+        // well this is pretty cool I never knew I can put japanese here :)
+        setCurrentFilter({...はい})
+    }
 
     // common function
     const handleAreaClick = (areaId: string) => {

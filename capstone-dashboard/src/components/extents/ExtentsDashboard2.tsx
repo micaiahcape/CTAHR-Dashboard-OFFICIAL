@@ -71,7 +71,19 @@ function establishExtentsFilters(data: DataRow[]) {
         ecosystem: ecosystems[0],
     }
 
-    return { filterOptions, defaultFilter };
+    // for ease of use
+    const filterDescriptions = {
+        btnVars: ["ecosystem_list"],
+        dropdownVars: [],
+        singleRangeVars: [],
+        doubleRangeVars: ["years"],
+        displayText: {
+            years: "Year",
+            ecosystem_list: "Ecosystem type",
+        }        
+    }
+
+    return { filterOptions, defaultFilter, filterDescriptions };
 }
 
 // returns an object in the format of {location1: value1, location2: value2, ... }

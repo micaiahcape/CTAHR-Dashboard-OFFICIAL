@@ -108,7 +108,19 @@ function establishMarineFilters(data: MarineRow[]) {
         year: years[years.length - 1],
     }
 
-    return { filterOptions, defaultFilter };
+    // for ease of use
+    const filterDescriptions = {
+        btnVars: [],
+        dropdownVars: ["variable_list"],
+        singleRangeVars: ["years"],
+        doubleRangeVars: [],
+        displayText: {
+            years: "Year",
+            variable_list: "Variable to view"
+        }
+    }
+
+    return { filterOptions, defaultFilter, filterDescriptions };
 }
 
 function filterMarineRows (rows: MarineRow[], filterSettings: MarineFilterSettings) {

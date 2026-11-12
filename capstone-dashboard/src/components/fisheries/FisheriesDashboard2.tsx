@@ -93,7 +93,20 @@ function establishFisheryFilters (data: DataRow[]) {
         ecosystem: "All Ecosystems",
     }
 
-    return { filterOptions, defaultFilter }
+    // for ease of use
+    const filterDescriptions = {
+        btnVars: ["ecosystem_list", "species_list"],
+        dropdownVars: [],
+        singleRangeVars: [],
+        doubleRangeVars: ["years"],
+        displayText: {
+            years: "Year",
+            species_list: "Species classification",
+            ecosystem_list: "Ecosystem type",
+        }
+    }
+
+    return { filterOptions, defaultFilter, filterDescriptions };
 }
 
 // returns an object in the format of {location1: value1, location2: value2, ... }
