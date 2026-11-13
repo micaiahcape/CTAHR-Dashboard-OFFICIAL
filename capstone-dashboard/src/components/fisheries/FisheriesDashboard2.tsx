@@ -103,6 +103,11 @@ function establishFisheryFilters (data: DataRow[]) {
             years: "Year",
             species_list: "Species classification",
             ecosystem_list: "Ecosystem type",
+        },
+        correspondingVariable: {
+            years: ["startYear", "endYear"],
+            species_list: "species",
+            ecosystem_list: "ecosystem"
         }
     }
 

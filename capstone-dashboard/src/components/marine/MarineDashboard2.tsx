@@ -6,9 +6,6 @@ import dynamic from "next/dynamic";
 // @ts-ignore
 import "../dashboard/dashboard.css";
 
-const Map = dynamic(() => import("../map/Map"), { ssr: false });
-
-
 export interface MarineRow{
     year: number,
     moku_key: string,
@@ -117,6 +114,10 @@ function establishMarineFilters(data: MarineRow[]) {
         displayText: {
             years: "Year",
             variable_list: "Variable to view"
+        },
+        correspondingVariable: {
+            years: "year",
+            variable_list: "variable"
         }
     }
 

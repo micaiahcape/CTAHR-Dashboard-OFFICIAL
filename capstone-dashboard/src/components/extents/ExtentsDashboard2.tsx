@@ -80,7 +80,11 @@ function establishExtentsFilters(data: DataRow[]) {
         displayText: {
             years: "Year",
             ecosystem_list: "Ecosystem type",
-        }        
+        },
+        correspondingVariable: {
+            years: ["startYear", "endYear"],
+            ecosystem_list: "ecosystem",
+        }              
     }
 
     return { filterOptions, defaultFilter, filterDescriptions };

@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import dynamic from "next/dynamic";
 import L, { LatLngExpression } from "leaflet";
 import GeoJSONLayer from "./GeoJSONLayer";
+import DashboardFilterMenu from "./DashboardFilterMenu";
 import Legend from "./Legend";
 import "../dashboard/dashboard.css";
 import "leaflet/dist/leaflet.css";
@@ -162,7 +163,14 @@ export default function DashboardTemplate<TRow, TFilter> ({
 
                 <div style={{padding: "5% 5%"}}>
                     {/* ── FILTER TAB ── */}
-                    {activeTab === "filter" && (<p>My bad chat this will work</p>)}
+                    {activeTab === "filter" && (
+                        <DashboardFilterMenu 
+                            filterOptions={filterInfo?.filterOptions}
+                            currentFilter={currentFilter}
+                            filterDescriptions={filterInfo?.filterDescriptions}
+                            onChangeFilter={handleFilterChange}
+                        />
+                    )}
 
                     {/* ── VIZ TAB ── */}
                     {activeTab === "viz" && (<p>My bad chat this will work</p>
