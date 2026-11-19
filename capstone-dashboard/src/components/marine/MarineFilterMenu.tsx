@@ -69,7 +69,7 @@ export default function MarineFilterMenu({
                 <div style={{width: "100%", position: "relative", marginBottom: "2%"}}>
                     <div className="sliderValueHolder" style={{ marginLeft: calculatedMarginLeft}}>{currentYear}</div>
                 </div>
-                
+
                 <ReactSlider 
                 value={currentYear}
                 minDistance={0}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import ReactSlider from "react-slider";
 import "../dashboard/dashboard.css";
 
@@ -52,6 +52,8 @@ export default function DashboardFilterMenu({
         return condensedFilterInfo
     }, [])
 
+    console.log(variableSummary)
+
     function changeFilter(key: string, value: any) {
         const currentFilterCopy = {...currentFilter}
         currentFilterCopy[key] = value
@@ -79,14 +81,9 @@ export default function DashboardFilterMenu({
         const variableToChange = filterInfo.correspondingVariable
         return(
             <div className="rp-section">
-                <div className="filter-label">County</div>
-                <select
-                className="filter-select"
-                value={selectedCounty}
-                onChange={(e) => setSelectedCounty(e.target.value)}
-                >
-                <option value="">All Counties</option>
-                {filterOptions.counties_list.map((c) => (
+                <div className="filter-label">{filterInfo.displayText}</div>
+                <select className="filter-select" value={currentFilter[variableToChange]}onChange={(e) => {changeFilter(variableToChange, e.target.value)}}> 
+                {filterInfo.options.map((c) => (
                     <option key={c}>{c}</option>
                 ))}
                 </select>
@@ -94,32 +91,81 @@ export default function DashboardFilterMenu({
         )
     }
 
-    console.log(variableSummary)
+    function YearSlider (filterInfo: IndividualFilterDescription, variable: string) {
+        const variableToChange = filterInfo.correspondingVariable
+        const isNotRange = filterInfo.variableType == "singleRangeVars"
 
+        const minYear = filterOptions[variable][0]
+        const maxYear = filterOptions[variable][filterOptions[variable].length - 1]
+        
+        const currentYear = 
+        isNotRange ? currentFilter[variableToChange] : [currentFilter[filterInfo.correspondingVariable[0]], currentFilter[filterInfo.correspondingVariable[1]]]
 
+        const currentYearDisplay = 
+        isNotRange ? currentFilter[variableToChange] : `${currentFilter[filterInfo.correspondingVariable[0]]}-${currentFilter[filterInfo.correspondingVariable[1]]}`
 
-    return(<p>Sorry guys</p>)
+        const calculatedMarginLeft = (() => {
+            const range = maxYear - minYear;
+            const centerYear = 
+            isNotRange ? currentYear : (currentFilter[filterInfo.correspondingVariable[0]] + currentFilter[filterInfo.correspondingVariable[1]]) / 2
 
+            const resultantPercent = ((centerYear - minYear) / range) * 100;
 
-    {/* const minYear = filterOptions.years[0]
-    const maxYear = filterOptions.years[filterOptions.years.length - 1]
+            if (resultantPercent > 85) {
+                return "85%";
+            } else if (resultantPercent < 15) {
+                return "15%";
+            }
 
-    const calculatedMarginLeft = (() => {
-        const range = maxYear - minYear;
-        const leftPercent = ((currentYearRange[0] - minYear) / range) * 100;
-        const rightPercent = ((currentYearRange[1] - minYear) / range) * 100;
-        const resultantPercent = (leftPercent + rightPercent) / 2;
+            return (resultantPercent + "%")
+            
+        }) ();
 
-        if (resultantPercent > 85) {
-            return "85%";
-        } else if (resultantPercent < 15) {
-            return "15%";
+        const singleYearUpdateFn = (val: number) => {
+            changeFilter(variableToChange, val)
         }
 
-        return (resultantPercent + "%")
-        
-    }) ();
+        const multiYearUpdateFn = (val: [number, number], thumbIndex: number) => {
+            changeFilter(filterInfo.correspondingVariable[thumbIndex], val[thumbIndex])
+        }
 
-    if (selectedEcosystem == "") return (<p>Please wait...</p>) */}
+        return (
+            <div className="rp-section">
+                <div className="filter-label">Year Range</div>
+                <div style={{width: "100%", position: "relative", marginBottom: "2%"}}>
+                    <div className="sliderValueHolder" style={{ marginLeft: calculatedMarginLeft}}>{currentYearDisplay}</div>
+                </div>
+                
+                <ReactSlider 
+                value={currentYear}
+                minDistance={0}
+                step={1}
+                pearling={true}
+                min={minYear}
+                max={maxYear}
+                className="horizontal-slider"
+                thumbClassName="year-thumb"
+                trackClassName="year-track"
+                onChange={isNotRange ? singleYearUpdateFn : multiYearUpdateFn} />
+            </div>
+        )
+    }
+
+    return(
+    <>
+        <p style={{fontSize: "125%", fontWeight: "bold"}}>Applied Filters</p>
+        {Object.keys(variableSummary).map(k => {
+            const varType = variableSummary[k].variableType
+            if (varType == "btnVars") {
+                return Btns(variableSummary[k])
+            } else if (varType == "dropdownVars") {
+                return DropDowns(variableSummary[k])
+            } else if (varType == "singleRangeVars" || varType == "doubleRangeVars") {
+                return YearSlider(variableSummary[k], k)
+            }
+
+        })}
+
+    </>)
 
 }
