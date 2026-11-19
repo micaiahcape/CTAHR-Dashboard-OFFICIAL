@@ -1,7 +1,7 @@
-import FisheriesDashboard from "../fisheries/FisheriesDashboard";
-import ExtentsDashboard from "../extents/ExtentsDashboard";
-import FilterSidebar from "./FilterSidebar";
-import MarineDashboard from "../marine/MarineDashboard";
+import FisheriesDashboard2 from "../fisheries/FisheriesDashboard2";
+import ExtentsDashboard2 from "../extents/ExtentsDashboard2";
+import MarineDashboard2 from "../marine/MarineDashboard2";
+import LeftSidebar from "./LeftSidebar";
 import { useState } from "react";
 import { IBM_Plex_Sans } from 'next/font/google'
 
@@ -16,18 +16,18 @@ export default function DashboardFINAL() {
 
     return (
         <div className={fnt.className}>
-            <div className="dashboard-container" >
+            <div style = {{display: "flex", height: "100vh", overflow: "hidden"}}>
                 {/* Left nav */}
-                <FilterSidebar
+                <LeftSidebar
                     layer={layer}
                     setLayer={setLayer}
                     datatype={dataset}
                     setDatatype={setDataset}
                 />
 
-                {layer == "fisheries" && <FisheriesDashboard dataset={dataset}/>}
-                {(layer == "extents" && dataset == "terrestrial") && <ExtentsDashboard dataset={dataset}/>}
-                {(layer == "extents" && dataset == "marine") && <MarineDashboard dataset={dataset}/>}
+                {layer == "fisheries" && <FisheriesDashboard2 dataType={dataset} key={dataset}/>}
+                {(layer == "extents" && dataset == "terrestrial") && <ExtentsDashboard2 />}
+                {(layer == "extents" && dataset == "marine") && <MarineDashboard2/>}
             </div>
         </div>
     )

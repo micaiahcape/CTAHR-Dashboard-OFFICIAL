@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import FilterSidebar from "../components/dashboard/FilterSidebar";
+import FilterSidebar from "../components/dashboard/LeftSidebar";
 
 describe("FilterSidebar", () => {
 
