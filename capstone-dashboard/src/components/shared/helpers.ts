@@ -28,7 +28,7 @@ export function getContrastColor(hexColor: string) {
     const luminance = 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
 
     // Luminance threshold is ~0.179
-    return luminance > 0.179 ? '#000000' : '#FFFFFF';
+    return luminance > 0.300 ? '#000000' : '#FFFFFF';
 }
 
 export const formatCurrency = (value: number) =>

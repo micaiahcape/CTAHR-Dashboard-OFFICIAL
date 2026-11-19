@@ -233,14 +233,15 @@ function extentsLfTooltip (feat: any, appliedFilters: ExtentsFilterSettings, col
     )
 }
 
-function fisheryTitle (appliedFilters: ExtentsFilterSettings) {
-    return (
-        <p>Extents data, <span className="summary-highlight">{appliedFilters.ecosystem}</span>: from {appliedFilters.startYear}-{appliedFilters.endYear}</p>
-    )
+function extentsTitle (appliedFilters: ExtentsFilterSettings) {
+    const mapTitle = <p>Extents data, <span className="summary-highlight">{appliedFilters.ecosystem}</span>: from {appliedFilters.startYear}-{appliedFilters.endYear}</p>
+    const legendTitle = <p>Relative change in area (%)</p>
+    
+    return { mapTitle, legendTitle }
 }
 
 export default function ExtentsDashboard2 () {
-    const fisheryFunctions = {
+    const extentsFunctions = {
         parseGeoJSONFn: parseExtentsGeoJSON,
         establishFilterFn: establishExtentsFilters,
         filterFn: filterExtentsRows,
@@ -250,8 +251,8 @@ export default function ExtentsDashboard2 () {
 
     return (<DashboardTemplate 
         geoJSONPath="/mokuextentsdata/USED_IN_PROJECT/2026_10_07_terrestrial_extents_byMoku.geojson"
-        uniqFunctions={fisheryFunctions} 
+        uniqFunctions={extentsFunctions} 
         getToolTip={extentsLfTooltip}
-        getTitle={fisheryTitle}
+        getTitle={extentsTitle}
     />)
 }

@@ -2,11 +2,6 @@
   Dark Theme — Black + Orange accent (#d94801)
 */
 
-.dashboard-container {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
 
 /* ================= Dashboard (Central + right panel) ================= */
 
@@ -72,7 +67,7 @@
   color: #666;
   border: none;
   border-right: 1px solid #1c1c1c;
-  font-size: 13px;
+  font-size: 100%;
   font-weight: 500;
   cursor: pointer;
   display: flex;

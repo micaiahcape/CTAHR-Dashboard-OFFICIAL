@@ -51,17 +51,17 @@ export interface MarineFilterOptions {
 }
 
 const columnToDisplay = {
-    mean_Chlorophyll_A_ESA: {disp: "Chlorophyll A (from ESA)", safeUnit: "mg/m^3", unit: <span>mg/m<sup>3</sup></span>},
-    mean_Chlorophyll_A_NPP: {disp: "Chlorophyll A (from NPP)", unit: <span>mg/m<sup>3</sup></span>, safeUnit: "mg/m^3"},
-    mean_max_degree_weeks: {disp: "Coral Reef Degree Heating Weeks", unit: <span>°C-weeks</span>, safeUnit: "°C-weeks"},
-    mean_Kd490_ESA: {disp: "Kd490 Turbidity (from ESA)", unit: <span>m<sup>-1</sup></span>, safeUnit: "m^-1"},
-    mean_PAR_NASA: {disp: "Photosynthetic Active Radiation (from NASA)", unit: <span>mol photons m<sup>-2</sup> day<sup>-1</sup></span>, safeUnit: "mol photons m^-2 day^-1"}, 
-    mean_sea_temp: {disp: "Sea Temperature", unit: <span>°C</span>, safeUnit: "°C"},
-    mean_wave_height: {disp: "Wave Height", unit: <span>m</span>, safeUnit: "m"}
+    mean_Chlorophyll_A_ESA: {disp: "Chlorophyll A (from ESA)", short: "Chlorophyll A", safeUnit: "mg/m^3", unit: <span>mg/m<sup>3</sup></span>, defaultColor: ["#c8f7cf", "#0d6619"]},
+    mean_Chlorophyll_A_NPP: {disp: "Chlorophyll A (from NPP)", short: "Chlorophyll A", unit: <span>mg/m<sup>3</sup></span>, safeUnit: "mg/m^3", defaultColor: ["#c8f7cf", "#0d6619"]},
+    mean_max_degree_weeks: {disp: "Coral Reef Degree Heating Weeks", short: "Degree Heating Wks", unit: <span>°C-weeks</span>, safeUnit: "°C-weeks", defaultColor: ["#f5f3c4", "#f72500"]},
+    mean_Kd490_ESA: {disp: "Kd490 Turbidity (from ESA)", short: "Turbidity", unit: <span>m<sup>-1</sup></span>, safeUnit: "m^-1", defaultColor: ["#b3e8e2", "#0059ff"]},
+    mean_PAR_NASA: {disp: "Photosynthetic Active Radiation (from NASA)", short: "PAR", unit: <span>mol photons m<sup>-2</sup> day<sup>-1</sup></span>, safeUnit: "mol photons m^-2 day^-1", defaultColor: ["#ffffeb", "#8800ff"]}, 
+    mean_sea_temp: {disp: "Sea Temperature", short: "Temperature", unit: <span>°C</span>, safeUnit: "°C", defaultColor: ["#f5f3c4", "#f72500"]},
+    mean_wave_height: {disp: "Wave Height", short: "Height", unit: <span>m</span>, safeUnit: "m", defaultColor: ["#b3e8e2", "#0059ff"]}
 }
 
 const displayToColumn = Object.fromEntries(
-    Object.entries(columnToDisplay).map(([key, value]) => [value.disp, {column: key, unit: value.unit, safeUnit: value.safeUnit}])
+    Object.entries(columnToDisplay).map(([key, value]) => [value.disp, {column: key, unit: value.unit, safeUnit: value.safeUnit, shortDisplay: value.short, defaultColor: value.defaultColor}])
 )
 
 function parseMarineGeoJSON(geojson: GeoJSON) {
@@ -142,9 +142,15 @@ function filterMarineRows (rows: MarineRow[], filterSettings: MarineFilterSettin
 }
 
 function computeColorThresholds (
-    aggTotals: Record<string, number>, 
-    defaultColors: [string, string] = ["#f7fbff", "#ff5100"], 
+    aggTotals: Record<string, any>, 
+    defaultColors?: [string, string], 
     numWholeSegments: number = 2) {
+
+    if (!defaultColors) {
+        const selectedVariable = aggTotals[Object.keys(aggTotals)[0]].variable
+        console.log(selectedVariable)
+        defaultColors = columnToDisplay[selectedVariable as keyof typeof columnToDisplay].defaultColor as [string, string]
+    }
     
     let sorted: number[]
     
@@ -157,19 +163,19 @@ function computeColorThresholds (
     let fixed_increment = -1;
     let fixed_low_outlier = -1;
 
-    const significant_figures = 2;
+    const significant_figures = 3;
     const num_digits = String(Math.trunc(increment)).length
 
     if (increment < 1) {
         // if the increment is very small, allow up to two decimal places (e.g. 0.05, 0.62)
-        fixed_increment = Math.ceil(increment * 100) / 100
+        fixed_increment = Math.ceil(increment * Math.pow(10, significant_figures)) / Math.pow(10, significant_figures)
     } else {
         fixed_increment = Math.round(increment / Math.pow(10, num_digits - significant_figures)) * Math.pow(10, num_digits - significant_figures)
     }
 
-    if (percent1 < 1) {
+    if (percent9 < 1) {
         // if the increment is very small, allow up to two decimal places (e.g. 0.05, 0.62)
-        fixed_low_outlier = Math.ceil(percent1 * 100) / 100
+        fixed_low_outlier = Math.ceil(percent1 * Math.pow(10, significant_figures)) / Math.pow(10, significant_figures)
     } else {
         fixed_low_outlier = Math.round(percent1 / Math.pow(10, num_digits - significant_figures)) * Math.pow(10, num_digits - significant_figures)
     }
@@ -242,10 +248,11 @@ function marineLfTooltip (feat: any, appliedFilters: MarineFilterSettings, color
     )
 }
 
-function marineTitle (appliedFilters: MarineFilterSettings) {
-    return (
-        <p>Marine ecosystem data, <span className="summary-highlight">{appliedFilters.variable} ({displayToColumn[appliedFilters.variable].unit})</span>: {appliedFilters.year}</p>
-    )
+function getMarineTitles (appliedFilters: Record<string, any>) {
+    const mapTitle = <p>Marine ecosystem data, <span className="summary-highlight">{appliedFilters.variable} ({displayToColumn[appliedFilters.variable].unit})</span>: {appliedFilters.year}</p>
+    const legendTitle = <p>{displayToColumn[appliedFilters.variable].shortDisplay} ({displayToColumn[appliedFilters.variable].unit})</p>
+
+    return { mapTitle, legendTitle }
 }
 
 export default function MarineDashboard2 () {
@@ -257,10 +264,10 @@ export default function MarineDashboard2 () {
         newGeoJSONFn: aggregateGeoJSON,
     }
 
-    return (<DashboardTemplate 
+    return (<DashboardTemplate
         geoJSONPath="/mokuextentsdata/USED_IN_PROJECT/2026_10_23_marine_conditions_byMoku.geojson"
         uniqFunctions={marineFunctions} 
         getToolTip={marineLfTooltip}
-        getTitle={marineTitle}
+        getTitle={getMarineTitles}
     />)
 }

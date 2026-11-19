@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import ReactSlider from "react-slider";
-import "@/css/filterMenu.module.css";
+import styles from "@/css/filterMenu.module.css";
 import { FilterDescription } from "../dashboard/DashboardTemplate";
 
 interface FilterProps {
@@ -13,7 +13,7 @@ interface FilterProps {
 }
 
 interface IndividualFilterDescription {
-    options: string[],
+    options: any[],
     displayText: string,
     variableType: string,
     correspondingVariable: string,
@@ -57,13 +57,13 @@ export default function DashboardFilterMenu({
     function Btns (filterInfo: IndividualFilterDescription) {
         const variableToChange = filterInfo.correspondingVariable
         return(
-            <div className="rp-section">
-                <div className="filter-label">{filterInfo.displayText}</div>
-                <div className="button-group">
+            <div className={styles["rp-section"]}>
+                <div className={styles["filter-label"]}>{filterInfo.displayText}</div>
+                <div className={styles["button-group"]}>
                 {filterInfo.options.map((e) => (
                     <button 
                     key={e} 
-                    className={`filter-btn ${currentFilter[variableToChange] === e ? "active" : ""}`} 
+                    className={`${styles["filter-btn"]} ${currentFilter[variableToChange] === e ? styles.active : ""}`} 
                     onClick={() => {changeFilter(variableToChange, e)}}>{e}</button>
                 ))}
                 </div>
@@ -74,9 +74,9 @@ export default function DashboardFilterMenu({
     function DropDowns (filterInfo: IndividualFilterDescription) {
         const variableToChange = filterInfo.correspondingVariable
         return(
-            <div className="rp-section">
-                <div className="filter-label">{filterInfo.displayText}</div>
-                <select className="filter-select" value={currentFilter[variableToChange]}onChange={(e) => {changeFilter(variableToChange, e.target.value)}}> 
+            <div className={styles["rp-section"]}>
+                <div className={styles["filter-label"]}>{filterInfo.displayText}</div>
+                <select className={styles["filter-select"]} value={currentFilter[variableToChange]}onChange={(e) => {changeFilter(variableToChange, e.target.value)}}> 
                 {filterInfo.options.map((c) => (
                     <option key={c}>{c}</option>
                 ))}
@@ -124,22 +124,22 @@ export default function DashboardFilterMenu({
         }
 
         return (
-            <div className="rp-section">
-                <div className="filter-label">Year Range</div>
+            <div className={styles["rp-section"]}>
+                <div className={styles["filter-label"]}>Year Range</div>
                 <div style={{width: "100%", position: "relative", marginBottom: "2%"}}>
-                    <div className="sliderValueHolder" style={{ marginLeft: calculatedMarginLeft}}>{currentYearDisplay}</div>
+                    <div className={styles["sliderValueHolder"]} style={{ marginLeft: calculatedMarginLeft }}>{currentYearDisplay}</div>
                 </div>
                 
                 <ReactSlider 
                 value={currentYear}
                 minDistance={0}
-                step={1}
+                step={Number(filterInfo.options[1]) - Number(filterInfo.options[0])}
                 pearling={true}
                 min={minYear}
                 max={maxYear}
-                className="horizontal-slider"
-                thumbClassName="year-thumb"
-                trackClassName="year-track"
+                className={styles["horizontal-slider"]}
+                thumbClassName={styles["year-thumb"]}
+                trackClassName={styles["year-track"]}
                 onChange={isNotRange ? singleYearUpdateFn : multiYearUpdateFn} />
             </div>
         )

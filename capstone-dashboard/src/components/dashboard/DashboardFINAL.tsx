@@ -16,7 +16,7 @@ export default function DashboardFINAL() {
 
     return (
         <div className={fnt.className}>
-            <div className="dashboard-container" >
+            <div style = {{display: "flex", height: "100vh", overflow: "hidden"}}>
                 {/* Left nav */}
                 <LeftSidebar
                     layer={layer}

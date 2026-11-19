@@ -236,9 +236,11 @@ function fisheriesLfTooltip (feat: any, appliedFilters: FisheryFilterSettings, c
 }
 
 function fisheryTitle (appliedFilters: FisheryFilterSettings) {
-    return (
-        <p>Fisheries data, with <span className="summary-highlight">{(!appliedFilters.species || appliedFilters.species === "All Species") ? "ALL" : appliedFilters.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!appliedFilters.ecosystem || appliedFilters.ecosystem === "All Ecosystems") ? "ALL" : appliedFilters.ecosystem.toLocaleLowerCase()}</span> ecosystems: {appliedFilters.startYear}-{appliedFilters.endYear}</p>
-    )
+    const mapTitle = <p>Fisheries data, with <span className="summary-highlight">{(!appliedFilters.species || appliedFilters.species === "All Species") ? "ALL" : appliedFilters.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!appliedFilters.ecosystem || appliedFilters.ecosystem === "All Ecosystems") ? "ALL" : appliedFilters.ecosystem.toLocaleLowerCase()}</span> ecosystems: {appliedFilters.startYear}-{appliedFilters.endYear}</p>
+
+    const legendTitle = <p>Total exchange value (USD)</p>
+
+    return { mapTitle, legendTitle }
 }
 
 export default function FisheriesDashboard2 ({dataType}: {dataType: string}) {

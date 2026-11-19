@@ -5,7 +5,7 @@
  */
 "use client";
 
-import "@/css/leftSideBar.module.css"
+import styles from "@/css/leftSideBar.module.css"
 import Image from "next/image";
 
 interface LeftSidebarProps {
@@ -27,40 +27,41 @@ export default function LeftSidebar({ layer, setLayer, datatype, setDatatype, on
   };
 
   return (
-    <div className="left-nav">
+    <div className={styles["left-nav"]}>
       
-      <Image src="/logo.png" className="left-nav-logo" alt="Oleson Lab" width={144} height={48} unoptimized />
-      <div className="left-nav-title">Hawaiʻi</div>
-      <div className="left-nav-subtitle">Ecosystem Accounts</div>
+      <Image src="/logo.png" className={styles["left-nav-logo"]} alt="Oleson Lab" width={144} height={48} unoptimized />
+      <div className={styles["left-nav-title"]}>Hawaiʻi</div>
+      <div className={styles["left-nav-subtitle"]}>Ecosystem Accounts</div>
 
-      <div className={`left-nav-item ${layer === "fisheries" ? "active" : ""}`}>
+      <div className={`${styles["left-nav-item"]} ${layer === "fisheries" ? styles.active : ""}`}>
+        
         <p onClick={() => {
           handleLayer("fisheries")
           handleDataType("noncomm")
-        }} className="left-nav-item-title">Fisheries</p>
+        }} className={styles["left-nav-item-title"]}>Fisheries</p>
         {layer === "fisheries" && (
           <div>
-            <p className={`left-nav-subitem ${datatype === "noncomm" ? "active" : ""}`} onClick={() => handleDataType("noncomm")} >Non-Commercial EVs</p>
-            <p className={`left-nav-subitem ${datatype === "comm" ? "active" : ""}`} onClick={() => handleDataType("comm")}>Commercial EVs</p>
+            <p className={`${styles["left-nav-subitem"]} ${datatype === "noncomm" ? styles.active : ""}`} onClick={() => handleDataType("noncomm")} >Non-Commercial EVs</p>
+            <p className={`${styles["left-nav-subitem"]} ${datatype === "comm" ? styles.active : ""}`} onClick={() => handleDataType("comm")}>Commercial EVs</p>
           </div>
         )}
       </div>
 
 
-      <div className={`left-nav-item ${layer === "extents" ? "active" : ""}`}>
+      <div className={`${styles["left-nav-item"]} ${layer === "extents" ? styles.active : ""}`}>
         <p onClick={() => {
           handleLayer("extents")
           handleDataType("terrestrial")
-        }} className="left-nav-item-title">Extents</p>
+        }} className={styles["left-nav-item-title"]}>Extents</p>
         {layer === "extents" && (
           <div>
-            <p className={`left-nav-subitem ${datatype === "terrestrial" ? "active" : ""}`} onClick={() => handleDataType("terrestrial")} >Terrestrial extents</p>
-            <p className={`left-nav-subitem ${datatype === "marine" ? "active" : ""}`} onClick={() => handleDataType("marine")}>Marine extents</p>
+            <p className={`${styles["left-nav-subitem"]} ${datatype === "terrestrial" ? styles.active : ""}`} onClick={() => handleDataType("terrestrial")} >Terrestrial extents</p>
+            <p className={`${styles["left-nav-subitem"]} ${datatype === "marine" ? styles.active : ""}`} onClick={() => handleDataType("marine")}>Marine extents</p>
           </div>
         )}
       </div>
 
-      <div className={`left-nav-item ${layer === "recreation" ? "active" : ""}`}>
+      <div className={`${styles["left-nav-subitem"]} ${datatype == "recreation" ? styles.active : ""}`}>
         <p onClick={() => handleLayer("recreation")} className="left-nav-item-title">Recreation</p>
       </div>
     </div>

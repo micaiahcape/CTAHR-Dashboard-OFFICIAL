@@ -6,7 +6,7 @@ import L, { LatLngExpression } from "leaflet";
 import GeoJSONLayer from "../shared/GeoJSONLayer";
 import DashboardFilterMenu from "../shared/DashboardFilterMenu";
 import Legend from "../shared/Legend";
-import "@/css/dashboard.module.css";
+import styles from "@/css/dashboard.module.css";
 import "leaflet/dist/leaflet.css";
 
 export interface ColorThresholds {
@@ -40,7 +40,10 @@ interface DashboardProps<TRow, TFilter> {
         newGeoJSONFn: (originalGeoJSON: any, agg: Record<string, any>, appliedFilter?: Record<string, any>) => any;
     },
     getToolTip: (feat: any, appliedFilters: TFilter, colorThresholds: ColorThresholds) => React.ReactNode,
-    getTitle: (appliedFilters: TFilter) => React.ReactNode,
+    getTitle: (appliedFilters: TFilter) => {
+        mapTitle: React.ReactNode,
+        legendTitle: React.ReactNode,
+    },
 }
 
 export default function DashboardTemplate<TRow, TFilter extends Record<string, any>> ({
@@ -57,8 +60,8 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
     const [currentFilter, setCurrentFilter] = useState<TFilter | {}>({})
 
     // for the legend
-    const [colorRange, setColorRange] = useState<[string, string]>()
-    const [numWholeSegments, setNumWholeSegments] = useState<number>()
+    const [colorRange, setColorRange] = useState<[string, string] | undefined>()
+    const [numWholeSegments, setNumWholeSegments] = useState<number | undefined>()
 
     // Load data
     useEffect(() => {
@@ -126,14 +129,19 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
         setNumWholeSegments(seg)
     }
 
+    const resetLegendSetting = () => {
+        setColorRange(undefined)
+        setNumWholeSegments(undefined)
+    }
+
     return (
-        <div className="dashboard-main">
-            <div className="central-panel">
-                <div className="summary-display">{getTitle(currentFilter as TFilter)}</div>
+        <div className={styles["dashboard-main"]}>
+            <div className={styles["central-panel"]}>
+                <div className={styles["summary-display"]}>{getTitle(currentFilter as TFilter).mapTitle}</div>
 
                 {geoData && 
                 <div style={{ width: "100%", height: "100%" }}>
-                    <Legend colorBreakdowns={colorBreakdowns} unit="Total Exchange Value (USD)" onChangeColor={handleColorChange} onChangeSegment={handleSegmentChange} />
+                    <Legend colorBreakdowns={colorBreakdowns} display={getTitle(currentFilter as TFilter).legendTitle} onChangeColor={handleColorChange} onChangeSegment={handleSegmentChange} onResetLegend={resetLegendSetting}/>
                       
                     <MapContainer center={position} zoom={7} zoomControl={false} style={{ width: "100%", height: "100%" }}>
                         <TileLayer attribution="Tiles &copy; Esri" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
@@ -151,13 +159,13 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
             </div>
       
             {/* Right panel */}
-            <div className="right-panel">
+            <div className={styles["right-panel"]}>
 
                 {/* Tab header */}
-                <div className="right-panel-tabs">
-                    <button className={`rp-tab ${activeTab === "filter" ? "active" : ""}`} 
+                <div className={styles["right-panel-tabs"]}>
+                    <button className={`${styles["rp-tab"]} ${activeTab === "filter" ? styles.active : ""}}`} 
                     onClick={() => setActiveTab("filter")}>Filter</button>
-                    <button className={`rp-tab ${activeTab === "viz" ? "active" : ""}`} onClick={() => setActiveTab("viz")}>Data View</button>
+                    <button className={`${styles["rp-tab"]} ${activeTab === "viz" ? styles.active : ""}}`} onClick={() => setActiveTab("viz")}>Data View</button>
                 </div>
 
                 <div style={{padding: "5% 5%"}}>
