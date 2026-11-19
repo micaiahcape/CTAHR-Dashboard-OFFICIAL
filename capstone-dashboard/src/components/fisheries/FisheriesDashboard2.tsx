@@ -241,7 +241,7 @@ function fisheryTitle (appliedFilters: FisheryFilterSettings) {
     )
 }
 
-export default function FisheriesDashboard2 ({dataType}: {dataType: "noncomm" | "comm"}) {
+export default function FisheriesDashboard2 ({dataType}: {dataType: string}) {
     const fisheryFunctions = {
         parseGeoJSONFn: parseFisheriesGeoJSON,
         establishFilterFn: establishFisheryFilters,

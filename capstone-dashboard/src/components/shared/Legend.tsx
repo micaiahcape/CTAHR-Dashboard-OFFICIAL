@@ -1,12 +1,5 @@
-/*
-Scale component. Takes:
-1) an array of [min, max] values
-2) an array of 2 colors to represent min, max values
-3) the number of segments to divide the scale into (not including outliers)
-*/
-import { text } from "stream/consumers";
-import React, { useState, useEffect } from "react";
-import "../map/legend.css"
+import { useState } from "react";
+import "../@/css/legend.module.css"
 
 interface ColorThresholds {
     colors: string[],
@@ -30,9 +23,9 @@ export default function Legend({
 
     const defaultColor1 = colorBreakdowns.colors[0]
     const defaultColor2 = colorBreakdowns.colors[colorBreakdowns.colors.length - 1]
-    const [color1, setColor1] = React.useState(defaultColor1)
-    const [color2, setColor2] = React.useState(defaultColor2)
-    const [numWholeSegments, setNumWholeSegments] = React.useState(colorBreakdowns.thresholds.length - 1)
+    const [color1, setColor1] = useState(defaultColor1)
+    const [color2, setColor2] = useState(defaultColor2)
+    const [numWholeSegments, setNumWholeSegments] = useState(colorBreakdowns.thresholds.length - 1)
 
     const wholeSegmentArray = numWholeSegments > 0 ? Array(numWholeSegments).fill(0) : Array(1).fill(0)
 

@@ -1,8 +1,7 @@
 import FisheriesDashboard2 from "../fisheries/FisheriesDashboard2";
 import ExtentsDashboard2 from "../extents/ExtentsDashboard2";
 import MarineDashboard2 from "../marine/MarineDashboard2";
-import FilterSidebar from "./FilterSidebar";
-import MarineDashboard from "../marine/MarineDashboard";
+import LeftSidebar from "./LeftSidebar";
 import { useState } from "react";
 import { IBM_Plex_Sans } from 'next/font/google'
 
@@ -19,7 +18,7 @@ export default function DashboardFINAL() {
         <div className={fnt.className}>
             <div className="dashboard-container" >
                 {/* Left nav */}
-                <FilterSidebar
+                <LeftSidebar
                     layer={layer}
                     setLayer={setLayer}
                     datatype={dataset}

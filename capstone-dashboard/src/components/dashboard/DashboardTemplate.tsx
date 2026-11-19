@@ -1,27 +1,27 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, ZoomControl, useMap } from "react-leaflet";
-import dynamic from "next/dynamic";
+import { useEffect, useState, useMemo } from "react";
+import { MapContainer, TileLayer, ZoomControl } from "react-leaflet";
 import L, { LatLngExpression } from "leaflet";
-import GeoJSONLayer from "./GeoJSONLayer";
-import DashboardFilterMenu from "./DashboardFilterMenu";
-import Legend from "./Legend";
-import "../dashboard/dashboard.css";
+import GeoJSONLayer from "../shared/GeoJSONLayer";
+import DashboardFilterMenu from "../shared/DashboardFilterMenu";
+import Legend from "../shared/Legend";
+import "@/css/dashboard.module.css";
 import "leaflet/dist/leaflet.css";
 
-interface colorThresholds {
+export interface ColorThresholds {
     colors: string[],
     thresholds: number[],
     thresholdDisplays: string[]
 }
 
-interface FilterDescription {
+export interface FilterDescription {
     btnVars: string[],
     dropdownVars: string[],
     singleRangeVars: string[],
     doubleRangeVars: string[],
-    displayText: Record<string, string> // must be "variable name": "display"
+    displayText: Record<string, string>, // must be "variable name": "display"
+    correspondingVariable: Record<string, any>
 }
 
 const position: LatLngExpression = [20.5, -157.5];
@@ -36,14 +36,14 @@ interface DashboardProps<TRow, TFilter> {
             filterDescriptions: FilterDescription,
         }
         filterFn: (rows: TRow[], filter: TFilter) => Record<string, any>;
-        colorCalculationFn: (agg: Record<string, any>, defaultColors?: [string, string], numWholeSegments?: number) => colorThresholds;
+        colorCalculationFn: (agg: Record<string, any>, defaultColors?: [string, string], numWholeSegments?: number) => ColorThresholds;
         newGeoJSONFn: (originalGeoJSON: any, agg: Record<string, any>, appliedFilter?: Record<string, any>) => any;
     },
-    getToolTip: (feat: any, appliedFilters: TFilter, colorThresholds: colorThresholds) => React.ReactNode,
+    getToolTip: (feat: any, appliedFilters: TFilter, colorThresholds: ColorThresholds) => React.ReactNode,
     getTitle: (appliedFilters: TFilter) => React.ReactNode,
 }
 
-export default function DashboardTemplate<TRow, TFilter> ({
+export default function DashboardTemplate<TRow, TFilter extends Record<string, any>> ({
     geoJSONPath,
     uniqFunctions,
     getToolTip,
@@ -78,7 +78,6 @@ export default function DashboardTemplate<TRow, TFilter> ({
 
     if (!rowData || rowData.length == 0) return <div>Loading...</div>;
 
-    const filterRange = filterInfo && filterInfo.filterOptions
     const defaultFilter = filterInfo ? filterInfo.defaultFilter : {}
 
     // find the default filter
@@ -86,7 +85,7 @@ export default function DashboardTemplate<TRow, TFilter> ({
         setCurrentFilter(defaultFilter)
     }
 
-    if (Object.keys(currentFilter as Object).length <= 0) return <div>Loading...</div>;
+    if (Object.keys(currentFilter as Object).length <= 0 || !filterInfo) return <div>Loading...</div>;
 
     // ======== if filter isn't loaded, it short circuits here. ========
 
@@ -94,7 +93,7 @@ export default function DashboardTemplate<TRow, TFilter> ({
     const aggByLocation = uniqFunctions.filterFn(rowData, currentFilter as TFilter);
 
     // compute color breakdown. Returns an object for showing the thresholds and colors.
-    // e.g. {thresholds: [0, 100, 200], colors: ["red", "green", "blue", "yellow"]}
+    // e.g. {thresholds: [0, 100, 200], colors: ["red", "green", "blue", "yellow"], thresholdDisplays: ["0K", "0.1K", "0.2K"]}
     const colorBreakdowns = uniqFunctions.colorCalculationFn(aggByLocation, colorRange, numWholeSegments);
 
     // reaggregate to GeoJSON
@@ -165,9 +164,9 @@ export default function DashboardTemplate<TRow, TFilter> ({
                     {/* ── FILTER TAB ── */}
                     {activeTab === "filter" && (
                         <DashboardFilterMenu 
-                            filterOptions={filterInfo?.filterOptions}
+                            filterOptions={filterInfo ? filterInfo.filterOptions : {}} // shut up typescript
                             currentFilter={currentFilter}
-                            filterDescriptions={filterInfo?.filterDescriptions}
+                            filterDescriptions={filterInfo.filterDescriptions}
                             onChangeFilter={handleFilterChange}
                         />
                     )}
@@ -180,31 +179,4 @@ export default function DashboardTemplate<TRow, TFilter> ({
             </div>
         </div>
     );
-
-    // function that takes from the child component
-    /* const handleFilterChange = (yearStart: number, yearEnd: number, county: string, species: string, ecosystem: string) => {
-        const temp_new_filter: FisheryFilterSettings = {
-            startYear: yearStart,
-            endYear: yearEnd,
-            county: county,
-            species: species,
-            ecosystem: ecosystem
-        }
-
-        if (dataset === "noncomm") {
-            setNonCommFilter(temp_new_filter)
-        } else {
-            setCommFilter(temp_new_filter)
-        }
-    }
-
-    // also gets called from the child component (the sidebar.)
-    const resetFilter = () => {
-        setSelectedArea("");
-        if (dataset == "comm") {
-            setCommFilter(getDefaultFilterValues(commFilterOptions))
-        } else {
-            setNonCommFilter(getDefaultFilterValues(nonCommFilterOptions))
-        }
-    } */
 }

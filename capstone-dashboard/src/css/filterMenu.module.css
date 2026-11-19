@@ -1,0 +1,185 @@
+/* ================= Right Panel ================= */
+
+.horizontal-slider {
+  height: 2vh;
+  width: 100%;
+  background: #1a1a1a;
+  margin-top: auto;
+  margin-bottom: auto;
+  border-radius:999px;
+}
+
+.year-thumb {
+  height: 4vh;
+  width: 4vh;
+  border-radius: 25%;
+  background-color: #fff;
+  cursor: grab;
+  transform: translateY(-25%);
+}
+
+
+.sliderValueHolder {
+  background-color: #d94801;
+  color: #fff;
+  padding: 0.5% 1%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 85%;
+  min-width: 30%;
+  width: 30%;
+  z-index: 1000;
+  /*border: 1px solid #fff;*/
+  border-radius: 999px;
+}
+
+.year-track-1 {
+  background-color: #d94801;
+  height: 2vh;
+  border-radius: 999px;
+}
+
+
+/* Scrollable content area */
+.rp-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Section spacing inside tabs */
+.rp-section {
+  display: flex;
+  flex-direction: column;
+  margin: 5% 0 10% 0;
+}
+
+/* Empty viz state */
+.rp-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #444;
+}
+
+.rp-empty-icon {
+  font-size: 36px;
+  color: #2a2a2a;
+}
+
+.rp-empty-text {
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* Viz header inside panel */
+.viz-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #1c1c1c;
+}
+
+/* ================= Shared filter controls ================= */
+
+.filter-label {
+  font-size: 75%;
+  text-transform: uppercase;
+  color: #ccc;
+  letter-spacing: 0.4px;
+  margin-bottom: 3%;
+}
+
+/* Sublabels like "Marine", "Terrestrial", "Moku (hold Ctrl...)" */
+.filter-sublabel {
+  font-size: 10px;
+  color: #ccc;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.filter-sublabel.mt {
+  margin-top: 8px;
+}
+
+.filter-hint {
+  font-size: 10px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.filter-select {
+  width: 100%;
+  background: #1a1a1a;
+  color: #ccc;
+  border: 1px solid #2a2a2a;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.filter-select option {
+  color: #fff;
+  background: #1a1a1a;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #d94801;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-btn {
+  background: #1a1a1a;
+  color: #bbb;
+  border: 1px solid #2a2a2a;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 75%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-btn:hover {
+  background: #222;
+  color: #fff;
+}
+
+.filter-btn.active {
+  background: #d94801;
+  color: #fff;
+  border-color: #d94801;
+}
+
+.year-range-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.year-range-row .filter-select {
+  flex: 1;
+}
+
+.year-range-arrow {
+  color: #555;
+  flex-shrink: 0;
+}

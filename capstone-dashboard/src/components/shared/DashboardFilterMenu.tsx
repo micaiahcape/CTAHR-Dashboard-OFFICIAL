@@ -2,19 +2,13 @@
 
 import React, { useMemo } from "react";
 import ReactSlider from "react-slider";
-import "../dashboard/dashboard.css";
+import "@/css/filterMenu.module.css";
+import { FilterDescription } from "../dashboard/DashboardTemplate";
 
 interface FilterProps {
     filterOptions: Record<string, any[]>,
     currentFilter: Record<string, any>,
-    filterDescriptions: {
-        btnVars: string[],
-        dropdownVars: string[],
-        singleRangeVars: string[],
-        doubleRangeVars: string[],
-        displayText: Record<string, string>, // must be "variable name": "display"
-        correspondingVariable: Record<string, string>
-    }
+    filterDescriptions: FilterDescription
     onChangeFilter: (obj: Record<string, any>) => void;
 }
 
@@ -165,7 +159,5 @@ export default function DashboardFilterMenu({
             }
 
         })}
-
     </>)
-
 }

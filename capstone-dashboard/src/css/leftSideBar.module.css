@@ -1,0 +1,75 @@
+/* ================= Left Nav (logo + page label only) ================= */
+
+.left-nav {
+  width: 180px;
+  flex-shrink: 0;
+  background: #0a0a0a;
+  border-right: 1px solid #1c1c1c;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px 0 0;
+}
+
+.left-nav-logo {
+  width: 80%;
+  display: block;
+  margin: 0 auto 14px;
+}
+
+.left-nav-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  padding-left: 16px;
+}
+
+.left-nav-subtitle {
+  font-size: 11px;
+  color: #555;
+  padding-left: 16px;
+  margin-top: 3px;
+  margin-bottom: 20px;
+}
+
+.left-nav-item {
+  width: 100%;
+  font-size: 18px;
+  color: #888;
+  position: relative;
+  cursor: pointer;
+  margin-bottom: 5%;
+}
+
+.left-nav-item-title{
+  padding: 5% 10%;
+}
+
+.left-nav-item.active {
+  color: #fff;
+  font-weight: 600;
+  background: #1a1a1a;
+}
+
+.left-nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: #d94801;
+}
+
+.left-nav-subitem {
+  padding: 2% 10%;
+  margin: 2% 0;
+  font-size: 70%;
+  background-color: #1a1a1a;
+  font-weight: normal;
+}
+
+.left-nav-subitem.active {
+  color: #fff;
+  background-color:#d94801;
+}

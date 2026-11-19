@@ -2,9 +2,6 @@
 
 import { interpolate, getContrastColor } from "../shared/helpers";
 import DashboardTemplate from "../dashboard/DashboardTemplate";
-import dynamic from "next/dynamic";
-// @ts-ignore
-import "../dashboard/dashboard.css";
 
 export interface MarineRow{
     year: number,

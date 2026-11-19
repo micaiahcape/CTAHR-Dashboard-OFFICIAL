@@ -5,10 +5,10 @@
  */
 "use client";
 
-import "./dashboard.css";
+import "@/css/leftSideBar.module.css"
 import Image from "next/image";
 
-interface FilterSidebarProps {
+interface LeftSidebarProps {
   layer: "fisheries" | "extents";
   setLayer: (layer: "fisheries" | "extents") => void;
   datatype: string;
@@ -16,7 +16,7 @@ interface FilterSidebarProps {
   onLayerChange?: () => void;
 }
 
-export default function FilterSidebar({ layer, setLayer, datatype, setDatatype, onLayerChange }: FilterSidebarProps) {
+export default function LeftSidebar({ layer, setLayer, datatype, setDatatype, onLayerChange }: LeftSidebarProps) {
   const handleLayer = (val: "fisheries" | "extents") => {
     setLayer(val);
     onLayerChange?.();

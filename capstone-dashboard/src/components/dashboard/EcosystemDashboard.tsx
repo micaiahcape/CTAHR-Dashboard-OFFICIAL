@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "./dashboard.css";
-import FilterSidebar from "./FilterSidebar";
+import FilterSidebar from "./LeftSidebar";
 import FisheriesFilterMenu from "../fisheries/FisheriesFilterMenu";
 import { StringDecoder } from "node:string_decoder";
 
