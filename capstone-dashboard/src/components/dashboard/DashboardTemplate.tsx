@@ -111,9 +111,14 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
     /* ============ STATE CHANGING FUNCTIONS BELOW. CALLED BY CHILD COMPONENTS ============ */
 
     // for changing the filter
-    const handleFilterChange = (はい: Record<string, any>) => {
+    const handleFilterChange = (はい: Record<string, any> | undefined) => {
         // well this is pretty cool I never knew I can put japanese here :)
-        setCurrentFilter({...はい})
+        if (はい) {
+            setCurrentFilter({...はい})
+        } else {
+            setCurrentFilter(defaultFilter)
+        }
+
     }
 
     // common function
