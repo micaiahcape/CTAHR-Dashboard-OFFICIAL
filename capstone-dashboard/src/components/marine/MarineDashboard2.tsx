@@ -1,6 +1,7 @@
 "use client";
 
 import { interpolate, getContrastColor } from "../shared/helpers";
+import { FilterStatus } from "../dashboard/DashboardFINAL";
 import DashboardTemplate from "../dashboard/DashboardTemplate";
 
 export interface MarineRow{
@@ -84,7 +85,6 @@ function parseMarineGeoJSON(geojson: GeoJSON) {
         }
     }
 
-    console.log(rows)
     return rows;
 }
 
@@ -148,7 +148,6 @@ function computeColorThresholds (
 
     if (!defaultColors) {
         const selectedVariable = aggTotals[Object.keys(aggTotals)[0]].variable
-        console.log(selectedVariable)
         defaultColors = columnToDisplay[selectedVariable as keyof typeof columnToDisplay].defaultColor as [string, string]
     }
     
@@ -255,7 +254,7 @@ function getMarineTitles (appliedFilters: Record<string, any>) {
     return { mapTitle, legendTitle }
 }
 
-export default function MarineDashboard2 () {
+export default function MarineDashboard2 ({filterStatus, showMap} : {filterStatus: FilterStatus, showMap: boolean}) {
     const marineFunctions = {
         parseGeoJSONFn: parseMarineGeoJSON,
         establishFilterFn: establishMarineFilters,
@@ -266,6 +265,8 @@ export default function MarineDashboard2 () {
 
     return (<DashboardTemplate
         geoJSONPath="/mokuextentsdata/USED_IN_PROJECT/2026_10_23_marine_conditions_byMoku.geojson"
+        filterStatus={filterStatus}
+        showMap={showMap}
         uniqFunctions={marineFunctions} 
         getToolTip={marineLfTooltip}
         getTitle={getMarineTitles}

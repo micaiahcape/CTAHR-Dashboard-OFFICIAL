@@ -22,9 +22,6 @@ export default function Legend({
     onChangeSegment,
     onResetLegend,
 }: LegendProps) {
-
-    console.log(JSON.stringify(colorBreakdowns))
-
     const defaultColor1 = colorBreakdowns.colors[0]
     const defaultColor2 = colorBreakdowns.colors[colorBreakdowns.colors.length - 1]
     const [color1, setColor1] = useState(defaultColor1)
@@ -42,7 +39,6 @@ export default function Legend({
             const computed = `${100 / (numWholeSegments + 1)}fr `
             str += computed;
         }
-        console.log(str)
         return str;
     }) ();
 

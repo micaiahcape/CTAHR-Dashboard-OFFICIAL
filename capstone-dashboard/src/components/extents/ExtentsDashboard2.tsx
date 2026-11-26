@@ -1,5 +1,6 @@
 import { interpolate, formatCurrency, getContrastColor } from "../shared/helpers";
 import DashboardTemplate from "../dashboard/DashboardTemplate";
+import { FilterStatus } from "../dashboard/DashboardFINAL";
 import { useState } from "react";
 
 interface DataRow {
@@ -240,7 +241,7 @@ function extentsTitle (appliedFilters: ExtentsFilterSettings) {
     return { mapTitle, legendTitle }
 }
 
-export default function ExtentsDashboard2 () {
+export default function ExtentsDashboard2 ({filterStatus, showMap} : {filterStatus: FilterStatus, showMap: boolean}) {
     const extentsFunctions = {
         parseGeoJSONFn: parseExtentsGeoJSON,
         establishFilterFn: establishExtentsFilters,
@@ -252,6 +253,8 @@ export default function ExtentsDashboard2 () {
     return (<DashboardTemplate 
         geoJSONPath="/mokuextentsdata/USED_IN_PROJECT/2026_10_07_terrestrial_extents_byMoku.geojson"
         uniqFunctions={extentsFunctions} 
+        showMap={showMap}
+        filterStatus={filterStatus}
         getToolTip={extentsLfTooltip}
         getTitle={extentsTitle}
     />)

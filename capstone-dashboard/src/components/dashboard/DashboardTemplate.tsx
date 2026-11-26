@@ -7,6 +7,7 @@ import GeoJSONLayer from "../shared/GeoJSONLayer";
 import DashboardFilterMenu from "../shared/DashboardFilterMenu";
 import Legend from "../shared/Legend";
 import styles from "@/css/dashboard.module.css";
+import { FilterStatus } from "./DashboardFINAL";
 import "leaflet/dist/leaflet.css";
 
 export interface ColorThresholds {
@@ -28,6 +29,8 @@ const position: LatLngExpression = [20.5, -157.5];
 
 interface DashboardProps<TRow, TFilter> {
     geoJSONPath: string,
+    filterStatus: FilterStatus
+    showMap: boolean,
     uniqFunctions: {
         parseGeoJSONFn: (rawGeoJSON: any[]) => TRow[];
         establishFilterFn: (rows: TRow[]) => {
@@ -49,6 +52,8 @@ interface DashboardProps<TRow, TFilter> {
 export default function DashboardTemplate<TRow, TFilter extends Record<string, any>> ({
     geoJSONPath,
     uniqFunctions,
+    showMap,
+    filterStatus,
     getToolTip,
     getTitle,
 } : DashboardProps<TRow, TFilter>) {
@@ -71,6 +76,7 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
             setGeoData(json)
         }
         loadData();
+        console.log(`finished getting data from: ${geoJSONPath}`)
     }, []);
 
     // convert geoJSON into rows
@@ -137,9 +143,10 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
     return (
         <div className={styles["dashboard-main"]}>
             <div className={styles["central-panel"]}>
+                
                 <div className={styles["summary-display"]}>{getTitle(currentFilter as TFilter).mapTitle}</div>
 
-                {geoData && 
+                {(geoData && showMap) && 
                 <div style={{ width: "100%", height: "100%" }}>
                     <Legend colorBreakdowns={colorBreakdowns} display={getTitle(currentFilter as TFilter).legendTitle} onChangeColor={handleColorChange} onChangeSegment={handleSegmentChange} onResetLegend={resetLegendSetting}/>
                       
@@ -155,13 +162,23 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
                             toolTipFn={getToolTip}
                         />
                     </MapContainer>
+
+                    {filterStatus.filterShown && (
+                        <div style={{left: `${filterStatus.xPos*0.2}px`, top: `${filterStatus.yPos}px`}} className={styles["floating-filter"]}>
+                            <DashboardFilterMenu 
+                                filterOptions={filterInfo ? filterInfo.filterOptions : {}} // shut up typescript
+                                currentFilter={currentFilter}
+                                filterDescriptions={filterInfo.filterDescriptions}
+                                onChangeFilter={handleFilterChange}
+                            />
+                        </div>
+                    )}
                 </div>}
             </div>
       
             {/* Right panel */}
-            <div className={styles["right-panel"]}>
+            {/*<div className={styles["right-panel"]}>
 
-                {/* Tab header */}
                 <div className={styles["right-panel-tabs"]}>
                     <button className={`${styles["rp-tab"]} ${activeTab === "filter" ? styles.active : ""}}`} 
                     onClick={() => setActiveTab("filter")}>Filter</button>
@@ -169,22 +186,12 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
                 </div>
 
                 <div style={{padding: "5% 5%"}}>
-                    {/* ── FILTER TAB ── */}
-                    {activeTab === "filter" && (
-                        <DashboardFilterMenu 
-                            filterOptions={filterInfo ? filterInfo.filterOptions : {}} // shut up typescript
-                            currentFilter={currentFilter}
-                            filterDescriptions={filterInfo.filterDescriptions}
-                            onChangeFilter={handleFilterChange}
-                        />
-                    )}
 
-                    {/* ── VIZ TAB ── */}
                     {activeTab === "viz" && (<p>My bad chat this will work</p>
 
                     )}
                 </div>
-            </div>
+            </div>*/}
         </div>
     );
 }
