@@ -1,9 +1,64 @@
 /* ================= Right Panel ================= */
+/*.filter-body {
+	position: relative;
+	background: #1a1a1a;
+  padding: 2% 5%
+}
+
+.filter-body:after {
+	right: 100%;
+	top: 50%;
+	border: solid transparent;
+	content: "";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+	border-color: rgba(136, 183, 213, 0);
+	border-right-color: #1a1a1a;
+	border-width: 30px;
+	margin-top: -30px;
+}*/
+
+.filter-body {
+	position: relative;
+	background:  rgba(26, 26, 26, 0.85);
+	border: 3px solid #828282;
+  padding: 2% 5%;
+  z-index: 10000;
+  border-radius: 10px;
+}
+
+.filter-body:after, .filter-body:before {
+	right: 100%;
+	top: 50%;
+	border: solid transparent;
+	content: "";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.filter-body:after {
+	border-color: rgba(136, 183, 213, 0);
+	border-right-color: #1a1a1a;
+	border-width: 30px;
+	margin-top: -30px;
+  z-index: 10000;
+}
+
+.filter-body:before {
+	border-color: rgba(245, 139, 127, 0);
+	border-right-color: #828282;
+	border-width: 35px;
+	margin-top: -35px;
+}
 
 .horizontal-slider {
   height: 2vh;
   width: 100%;
-  background: #1a1a1a;
+  background-color: #4f4f4f;
   margin-top: auto;
   margin-bottom: auto;
   border-radius:999px;
@@ -94,11 +149,13 @@
 /* ================= Shared filter controls ================= */
 
 .filter-label {
-  font-size: 75%;
+  font-size: 80%;
   text-transform: uppercase;
   color: #ccc;
   letter-spacing: 0.4px;
-  margin-bottom: 3%;
+  margin-bottom: 4%;
+  padding: 0.5% 0 0.5% 3%;
+  border-left: 3px solid #ccc
 }
 
 /* Sublabels like "Marine", "Terrestrial", "Moku (hold Ctrl...)" */

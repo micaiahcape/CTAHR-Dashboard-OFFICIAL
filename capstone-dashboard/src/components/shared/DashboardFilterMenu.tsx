@@ -46,8 +46,6 @@ export default function DashboardFilterMenu({
         return condensedFilterInfo
     }, [])
 
-    console.log(variableSummary)
-
     function changeFilter(key: string, value: any) {
         const currentFilterCopy = {...currentFilter}
         currentFilterCopy[key] = value
@@ -146,18 +144,18 @@ export default function DashboardFilterMenu({
     }
 
     return(
-    <>
-        <p style={{fontSize: "125%", fontWeight: "bold"}}>Applied Filters</p>
-        {Object.keys(variableSummary).map(k => {
-            const varType = variableSummary[k].variableType
-            if (varType == "btnVars") {
-                return Btns(variableSummary[k])
-            } else if (varType == "dropdownVars") {
-                return DropDowns(variableSummary[k])
-            } else if (varType == "singleRangeVars" || varType == "doubleRangeVars") {
-                return YearSlider(variableSummary[k], k)
-            }
+        <div className={styles["filter-body"]}> {/* this is the relatively placed element */}
+            <p style={{fontSize: "125%", fontWeight: "bold"}}>Applied Filters</p>
+            {Object.keys(variableSummary).map(k => {
+                const varType = variableSummary[k].variableType
+                if (varType == "btnVars") {
+                    return Btns(variableSummary[k])
+                } else if (varType == "dropdownVars") {
+                    return DropDowns(variableSummary[k])
+                } else if (varType == "singleRangeVars" || varType == "doubleRangeVars") {
+                    return YearSlider(variableSummary[k], k)
+                }
 
-        })}
-    </>)
+            })}
+        </div>)
 }

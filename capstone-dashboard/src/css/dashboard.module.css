@@ -9,17 +9,25 @@
   display: flex;
   flex: 1
 }
-
 /* ================= Central panel ================= */
 
 .central-panel {
   height: 100vh;
   position: relative;
   flex: 1;
+  flex-grow: 1;
 }
 
 .leaflet-interactive:focus {
   outline: none;
+}
+
+.floating-filter {
+  position: absolute;
+  z-index: 9998;
+  transform: translate(0%, -50%);
+  width: 25%;
+  padding: 0;
 }
 
 .summary-display {

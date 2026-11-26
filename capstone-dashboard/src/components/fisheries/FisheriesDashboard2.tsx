@@ -1,5 +1,6 @@
 import { interpolate, formatCurrency, getContrastColor } from "../shared/helpers";
 import DashboardTemplate from "../dashboard/DashboardTemplate";
+import { FilterStatus } from "../dashboard/DashboardFINAL";
 import { useState } from "react";
 
 export interface DataRow {
@@ -189,8 +190,6 @@ function computeColorThresholds (
 
 // standardize everything to value
 function aggregateGeoJSON (originalGeoJSON: any, agg: Record<string, any>) {
-    console.log("The original GeoJSON is: ")
-    console.log(originalGeoJSON)
     return ({
         ...originalGeoJSON,
         features: originalGeoJSON?.features.map((feature: any) => {
@@ -236,14 +235,18 @@ function fisheriesLfTooltip (feat: any, appliedFilters: FisheryFilterSettings, c
 }
 
 function fisheryTitle (appliedFilters: FisheryFilterSettings) {
-    const mapTitle = <p>Fisheries data, with <span className="summary-highlight">{(!appliedFilters.species || appliedFilters.species === "All Species") ? "ALL" : appliedFilters.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!appliedFilters.ecosystem || appliedFilters.ecosystem === "All Ecosystems") ? "ALL" : appliedFilters.ecosystem.toLocaleLowerCase()}</span> ecosystems: {appliedFilters.startYear}-{appliedFilters.endYear}</p>
+    const mapTitle = <p>Total Fisheries Exchange Value (USD) - <span className="summary-highlight">{(!appliedFilters.species || appliedFilters.species === "All Species") ? "ALL" : appliedFilters.species.toLocaleLowerCase()}</span> species and <span className="summary-highlight">{(!appliedFilters.ecosystem || appliedFilters.ecosystem === "All Ecosystems") ? "ALL" : appliedFilters.ecosystem.toLocaleLowerCase()}</span> ecosystems: {appliedFilters.startYear}-{appliedFilters.endYear}</p>
 
     const legendTitle = <p>Total exchange value (USD)</p>
 
     return { mapTitle, legendTitle }
 }
 
-export default function FisheriesDashboard2 ({dataType}: {dataType: string}) {
+export default function FisheriesDashboard2 ({filterStatus, dataType, showMap} : {
+    filterStatus: FilterStatus,
+    dataType: string,
+    showMap: boolean,
+}) {
     const fisheryFunctions = {
         parseGeoJSONFn: parseFisheriesGeoJSON,
         establishFilterFn: establishFisheryFilters,
@@ -253,11 +256,11 @@ export default function FisheriesDashboard2 ({dataType}: {dataType: string}) {
     }
 
     const toFetch = dataType === "noncomm" ? "/fisheriesdata/USED_IN_PROJECT/10_14_2026_noncomm_EV_byIsland.geojson" : "/fisheriesdata/USED_IN_PROJECT/10_14_2026_comm_EV_byCatchmentArea.geojson"
-    console.log("datatype is: " + dataType)
-    console.log(toFetch)
 
     return (<DashboardTemplate 
         geoJSONPath={toFetch} 
+        filterStatus={filterStatus}
+        showMap={showMap}
         uniqFunctions={fisheryFunctions} 
         getToolTip={fisheriesLfTooltip}
         getTitle={fisheryTitle}
