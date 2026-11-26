@@ -1,0 +1,38 @@
+.download-btn {
+    background-color: #d94801;
+    color: white;
+    display: flex;
+    font-size: 110%;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 2px solid white;
+}
+
+.download-text {
+    margin: auto 0 auto 0;
+    padding: 2%;
+    text-align: center;
+}
+
+.download-icon-holder {
+    width: 20%;
+    aspect-ratio: 1 / 1;
+    text-align: center;
+    padding: 2%;
+    display: flex;
+    justify-content: center;
+}
+
+.download-icon {
+    margin-top: auto;
+    margin-bottom: auto;
+    font-size: 150%;
+}
+
+.download-body {
+    position: absolute;
+    right: 4%;
+    bottom: 4%;
+    width: 15%;
+    z-index: 9999;
+}

@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, ZoomControl } from "react-leaflet";
 import L, { LatLngExpression } from "leaflet";
 import GeoJSONLayer from "../shared/GeoJSONLayer";
 import DashboardFilterMenu from "../shared/DashboardFilterMenu";
+import DataDownload from "../shared/DataDownload";
 import Legend from "../shared/Legend";
 import styles from "@/css/dashboard.module.css";
 import { FilterStatus } from "./DashboardFINAL";
@@ -167,6 +168,8 @@ export default function DashboardTemplate<TRow, TFilter extends Record<string, a
                             toolTipFn={getToolTip}
                         />
                     </MapContainer>
+
+                    <DataDownload />
 
                     {filterStatus.filterShown && (
                         <div style={{left: `${filterStatus.xPos*0.2}px`, top: `${filterStatus.yPos}px`}} className={styles["floating-filter"]}>
